@@ -1,0 +1,41 @@
+services:
+  backend:
+    build: ./backend
+    container_name: titans-backend
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - NODE_ENV=development
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - postgres
+
+  frontend:
+    build: ./frontend
+    container_name: titans-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    container_name: titans-redis
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: titans-postgres
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
