@@ -1,41 +1,42 @@
+version: '3.8'
 services:
   backend:
     build: ./backend
-    container_name: titans-backend
+    container_name: titan_backend
     ports:
       - "4000:4000"
-    environment:
-      - PORT=4000
-      - NODE_ENV=development
     volumes:
-      - ./backend:/app
-    depends_on:
-      - redis
-      - postgres
-
-  frontend:
-    build: ./frontend
-    container_name: titans-frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-
-  redis:
-    image: redis:7-alpine
-    container_name: titans-redis
-    ports:
-      - "6379:6379"
-
-  postgres:
-    image: postgres:15-alpine
-    container_name: titans-postgres
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules # Prevents local node_modules from overwriting container's
     env_file:
       - .env
+    depends_on:
+      - db # Add this dependency for Week 3
+
+  # Uncomment this section once your frontend is ready
+  # frontend:
+  #   build: ./frontend
+  #   container_name: titan_frontend
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #   stdin_open: true
+  #   tty: true
+
+  # Service for PostgreSQL database (for Week 3)
+  db:
+    image: postgres:14-alpine
+    container_name: titan_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+  postgres_data:

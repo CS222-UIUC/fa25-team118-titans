@@ -1,11 +1,20 @@
-FROM node:20-alpine
+# Use an official Node.js runtime as a parent image
+FROM node:18-alpine
 
-WORKDIR /app
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
+# Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
+
+# Install any needed packages specified in package.json
 RUN npm install
+
+# Bundle app source
 COPY . .
 
+# Make port 4000 available to the world outside this container
 EXPOSE 4000
 
-CMD ["node", "index.js"]
+# Define the command to run your app
+CMD [ "node", "index.js" ]

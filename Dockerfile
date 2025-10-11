@@ -15,7 +15,7 @@ COPY backend ./backend
 COPY frontend ./frontend
 
 WORKDIR /usr/src/app/backend
-RUN npm run compile
+# RUN npm run build
 
 WORKDIR /usr/src/app/frontend
 
