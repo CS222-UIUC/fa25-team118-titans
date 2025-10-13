@@ -1,32 +1,45 @@
-# Dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# Build output
-/build
-/dist
-
-# Logs
-logs
-*.log
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
+pnpm-debug.log*
 
-# Environment variables
+dist/
+build/
+.cache/
+*.tsbuildinfo
+
+logs/
+*.log
+*.out
+*.err
+
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
-# IDEs
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+coverage/
+*.lcov
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*.DS_Store
+*.iml
+
+*.pid
+*.seed
+docker-compose.override.yml
+
+frontend/node_modules/
+frontend/build/
+
+backend/node_modules/
+backend/dist/
+
+postgres-data/
+redis-data/
+
+*.bak
+*.tmp
