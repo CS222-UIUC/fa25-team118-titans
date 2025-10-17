@@ -1,0 +1,268 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  }
+  
+  .docs-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f9fafb;
+  }
+  
+  .docs-header {
+    background-color: white;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 12px 16px;
+  }
+  
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .menu-btn {
+    padding: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .menu-btn:hover {
+    background-color: #f3f4f6;
+  }
+  
+  .file-icon {
+    width: 24px;
+    height: 24px;
+    color: #2563eb;
+  }
+  
+  .doc-title-input {
+    font-size: 18px;
+    border: none;
+    outline: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    flex: 1;
+  }
+  
+  .doc-title-input:hover {
+    border: 1px solid #d1d5db;
+  }
+  
+  .doc-title-input:focus {
+    outline: none;
+  }
+  
+  .save-btn {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .save-btn:hover {
+    background-color: #1d4ed8;
+  }
+  
+  .toolbar {
+    background-color: white;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 8px 16px;
+  }
+  
+  .toolbar-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  
+  .toolbar-btn {
+    padding: 6px 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .toolbar-btn:hover {
+    background-color: #f3f4f6;
+  }
+  
+  .toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #d1d5db;
+    margin: 0 8px;
+  }
+  
+  .toolbar-select {
+    padding: 4px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  .icon-btn {
+    padding: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .icon-btn:hover {
+    background-color: #f3f4f6;
+  }
+  
+  .icon-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .sidebar {
+    position: absolute;
+    left: 0;
+    top: 116px;
+    width: 256px;
+    background-color: white;
+    border-right: 1px solid #e5e7eb;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    max-height: calc(100vh - 116px);
+    overflow-y: auto;
+  }
+  
+  .sidebar-content {
+    padding: 16px;
+  }
+  
+  .new-doc-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 16px;
+  }
+  
+  .new-doc-btn:hover {
+    background-color: #1d4ed8;
+  }
+  
+  .new-doc-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .doc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .doc-item {
+    width: 100%;
+    text-align: left;
+    padding: 12px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .doc-item:hover {
+    background-color: #f3f4f6;
+  }
+  
+  .doc-item.active {
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+  }
+  
+  .doc-title {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  
+  .doc-date {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  
+  .editor-container {
+    flex: 1;
+    overflow-y: auto;
+    background-color: #e5e7eb;
+    padding: 32px;
+  }
+  
+  .editor-paper {
+    max-width: 850px;
+    margin: 0 auto;
+    background-color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    min-height: 100%;
+  }
+  
+  .editor-content {
+    padding: 64px;
+    outline: none;
+    min-height: 100%;
+    line-height: 1.6;
+  }
+  
+  .editor-content:focus {
+    outline: none;
+  }
+  
+  .editor-content p {
+    margin-bottom: 12px;
+  }
+  
+  .editor-content h1 {
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+  
+  .editor-content h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
+  
+  .editor-content h3 {
+    font-size: 1.17em;
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
