@@ -4,7 +4,7 @@ import './DocsFrontend.css';
 
 export default function DocsFrontend() {
   const [documents, setDocuments] = useState([
-    { id: 1, title: 'Untitled Document', content: '<p>Start typing...</p>', lastModified: new Date() }
+    { id: 1, title: 'Untitled Doc', content: '<p>text</p>', lastModified: new Date() }
   ]);
   const [currentDocId, setCurrentDocId] = useState(1);
   const [showDocList, setShowDocList] = useState(false);
@@ -50,8 +50,8 @@ export default function DocsFrontend() {
     const newId = Math.max(...documents.map(d => d.id)) + 1;
     const newDoc = {
       id: newId,
-      title: 'Untitled Document',
-      content: '<p>Start typing...</p>',
+      title: 'Untitled Doc',
+      content: '<p>text</p>',
       lastModified: new Date()
     };
     setDocuments([...documents, newDoc]);
