@@ -6,6 +6,7 @@ React + Node.js document editor with real-time updates.
 ```bash
 cd backend
 npm install
+service postgresql start
 node index.js
 ```
 
