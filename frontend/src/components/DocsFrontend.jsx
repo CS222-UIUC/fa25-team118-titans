@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation, gql } from '@apollo/client';
+import { useQuery, useMutation, gql, useLazyQuery } from '@apollo/client';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu } from 'lucide-react';
 import './DocsFrontend.css';
 
@@ -19,6 +19,19 @@ export default function DocsFrontend() {
     }
   `;
 
+  const SEARCH_DOCUMENTS = gql`
+    query SearchDocuments($keyword: String!) {
+      searchDocuments(keyword: $keyword) { id title content lastModified }
+    }
+  `;
+
+  // next step (if interested): adding query into react below
+  const RECENT_DOCUMENTS = gql`
+    query RecentDocuments($limit: Int) {
+      recentDocuments(limit: $limit) { id title content lastModified }
+    }
+  `;
+
   const CREATE_DOCUMENT = gql`
     mutation CreateDocument($title: String!, $content: String) {
       createDocument(title: $title, content: $content) { id title content lastModified }
@@ -32,6 +45,7 @@ export default function DocsFrontend() {
   `;
 
   const { data, loading, error, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });
+  const [searchDocuments, { data: searchData, loading: searchLoading }] = useLazyQuery(SEARCH_DOCUMENTS);
   const [createDoc] = useMutation(CREATE_DOCUMENT);
   const [updateDoc] = useMutation(UPDATE_DOCUMENT);
 
@@ -139,6 +153,27 @@ export default function DocsFrontend() {
     setFontSize(size);
     if (editorRef.current) {
       editorRef.current.style.fontSize = size + 'px';
+    }
+  };
+
+  // next step: use the handleSearch to filter out documents by searched keyword
+  const handleSearch = async (keyword) => {
+    if (!keyword.trim()) return;
+
+    try {
+      const res = await searchDocuments({ variables: { keyword } });
+      if (res.data?.searchDocuments) {
+        const docs = res.data.searchDocuments.map(d => ({
+          id: d.id,
+          title: d.title,
+          content: d.content || '<p></p>',
+          lastModified: d.lastModified ? new Data(d.lastModified) : new Date(),
+        }));
+        setDocuments(docs);
+        if (docs.length > 0) setCurrentDocId(docs[0].id);
+      }
+    } catch (err) {
+      console.error("Search failed", err);
     }
   };
 
