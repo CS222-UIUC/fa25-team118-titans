@@ -1,38 +1,103 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useQuery, useMutation, gql } from '@apollo/client';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu } from 'lucide-react';
 import './DocsFrontend.css';
 
 export default function DocsFrontend() {
-  const [documents, setDocuments] = useState([
-    { id: 1, title: 'Untitled Doc', content: '<p>text</p>', lastModified: new Date() }
-  ]);
-  const [currentDocId, setCurrentDocId] = useState(1);
+  const [documents, setDocuments] = useState([]);
+  const [currentDocId, setCurrentDocId] = useState(null);
   const [showDocList, setShowDocList] = useState(false);
   const [fontSize, setFontSize] = useState('16');
   const editorRef = useRef(null);
+  const [loadingLocal, setLoadingLocal] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const currentDoc = documents.find(d => d.id === currentDocId);
+  const GET_DOCUMENTS = gql`
+    query GetDocuments {
+      documents { id title content lastModified }
+    }
+  `;
+
+  const CREATE_DOCUMENT = gql`
+    mutation CreateDocument($title: String!, $content: String) {
+      createDocument(title: $title, content: $content) { id title content lastModified }
+    }
+  `;
+
+  const UPDATE_DOCUMENT = gql`
+    mutation UpdateDocument($id: ID!, $title: String, $content: String) {
+      updateDocument(id: $id, title: $title, content: $content) { id title content lastModified }
+    }
+  `;
+
+  const { data, loading, error, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });
+  const [createDoc] = useMutation(CREATE_DOCUMENT);
+  const [updateDoc] = useMutation(UPDATE_DOCUMENT);
 
   useEffect(() => {
-    if (editorRef.current && currentDoc) {
-      editorRef.current.innerHTML = currentDoc.content;
+    if (data && data.documents) {
+      const docs = data.documents.map(d => ({ id: d.id, title: d.title, content: d.content || '<p></p>', lastModified: d.lastModified ? new Date(d.lastModified) : new Date() }));
+      setDocuments(docs);
+      if (docs.length > 0) setCurrentDocId(docs[0].id);
     }
-  }, [currentDocId]);
+  }, [data]);
+
+  useEffect(() => {
+    if (error) console.error('Error loading documents', error);
+  }, [error]);
+
+  // keep editor HTML in sync when doc changes
+  useEffect(() => {
+    if (editorRef.current && currentDoc) {
+      editorRef.current.innerHTML = currentDoc.content || '';
+    }
+  }, [currentDocId, currentDoc]);
 
   const execCommand = (command, value = null) => {
     document.execCommand(command, false, value);
     editorRef.current?.focus();
   };
 
-  const handleSave = () => {
-    if (editorRef.current) {
-      setDocuments(docs =>
-        docs.map(d =>
-          d.id === currentDocId
-            ? { ...d, content: editorRef.current.innerHTML, lastModified: new Date() }
-            : d
-        )
-      );
+
+  const createDocumentApollo = async (title, content) => {
+    const res = await createDoc({ variables: { title, content } });
+    const d = res.data.createDocument;
+    return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
+  };
+
+  const updateDocumentApollo = async (id, title, content) => {
+    const res = await updateDoc({ variables: { id, title, content } });
+    const d = res.data.updateDocument;
+    return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
+  };
+
+  const handleSave = async () => {
+    if (!editorRef.current) return;
+    const html = editorRef.current.innerHTML;
+    setSaving(true);
+    try {
+      const localDoc = documents.find(d => String(d.id) === String(currentDocId));
+      if (!localDoc) {
+
+        const created = await createDocumentApollo('Untitled Doc', html);
+        if (created) {
+          setDocuments(docs => [...docs, created]);
+          setCurrentDocId(created.id);
+
+          refetch();
+        }
+      } else {
+        const updated = await updateDocumentApollo(currentDocId, localDoc.title, html);
+        if (updated) {
+          setDocuments(docs => docs.map(d => d.id === currentDocId ? { ...d, content: updated.content, lastModified: updated.lastModified } : d));
+          refetch();
+        }
+      }
+    } catch (err) {
+      console.error('Save failed', err);
+    } finally {
+      setSaving(false);
     }
   };
 
