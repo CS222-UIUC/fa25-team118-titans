@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Type, Save, FileText, Plus, Menu } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu } from 'lucide-react';
+import './DocsFrontend.css';
 
-export default function docs_frontend() {
+export default function DocsFrontend() {
   const [documents, setDocuments] = useState([
     { id: 1, title: 'Untitled Document', content: '<p>Start typing...</p>', lastModified: new Date() }
   ]);
@@ -71,63 +72,58 @@ export default function docs_frontend() {
   const handleFontSizeChange = (e) => {
     const size = e.target.value;
     setFontSize(size);
-    execCommand('fontSize', '7');
-    const fontElements = editorRef.current?.querySelectorAll('font[size="7"]');
-    fontElements?.forEach(el => {
-      el.removeAttribute('size');
-      el.style.fontSize = size + 'px';
-    });
+    if (editorRef.current) {
+      editorRef.current.style.fontSize = size + 'px';
+    }
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center gap-4">
+    <div className="docs-container">
+      <div className="docs-header">
+        <div className="header-content">
           <button
             onClick={() => setShowDocList(!showDocList)}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="menu-btn"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <FileText className="w-6 h-6 text-blue-600" />
+          <FileText className="file-icon" />
           <input
             type="text"
             value={currentDoc?.title || ''}
             onChange={handleTitleChange}
-            className="text-lg font-normal border-none outline-none focus:outline-none px-2 py-1 hover:border hover:border-gray-300 rounded"
+            className="doc-title-input"
           />
           <button
             onClick={handleSave}
-            className="ml-auto flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="save-btn"
           >
-            <Save className="w-4 h-4" />
+            <Save style={{width: '16px', height: '16px'}} />
             Save
           </button>
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-4 py-2">
-        <div className="flex items-center gap-1">
+      <div className="toolbar">
+        <div className="toolbar-content">
           <button
             onClick={() => execCommand('undo')}
-            className="px-3 py-1.5 hover:bg-gray-100 rounded text-sm"
+            className="toolbar-btn"
           >
             Undo
           </button>
           <button
             onClick={() => execCommand('redo')}
-            className="px-3 py-1.5 hover:bg-gray-100 rounded text-sm"
+            className="toolbar-btn"
           >
             Redo
           </button>
-          <div className="w-px h-6 bg-gray-300 mx-2" />
+          <div className="toolbar-divider" />
           
           <select
             onChange={handleFontSizeChange}
             value={fontSize}
-            className="px-2 py-1 border border-gray-300 rounded text-sm"
+            className="toolbar-select"
           >
             <option value="12">12</option>
             <option value="14">14</option>
@@ -138,59 +134,59 @@ export default function docs_frontend() {
             <option value="32">32</option>
           </select>
 
-          <div className="w-px h-6 bg-gray-300 mx-2" />
+          <div className="toolbar-divider" />
 
           <button
             onClick={() => execCommand('bold')}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="icon-btn"
             title="Bold"
           >
-            <Bold className="w-4 h-4" />
+            <Bold />
           </button>
           <button
             onClick={() => execCommand('italic')}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="icon-btn"
             title="Italic"
           >
-            <Italic className="w-4 h-4" />
+            <Italic />
           </button>
           <button
             onClick={() => execCommand('underline')}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="icon-btn"
             title="Underline"
           >
-            <Underline className="w-4 h-4" />
+            <Underline />
           </button>
 
-          <div className="w-px h-6 bg-gray-300 mx-2" />
+          <div className="toolbar-divider" />
 
           <button
             onClick={() => execCommand('justifyLeft')}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="icon-btn"
             title="Align Left"
           >
-            <AlignLeft className="w-4 h-4" />
+            <AlignLeft />
           </button>
           <button
             onClick={() => execCommand('justifyCenter')}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="icon-btn"
             title="Align Center"
           >
-            <AlignCenter className="w-4 h-4" />
+            <AlignCenter />
           </button>
           <button
             onClick={() => execCommand('justifyRight')}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="icon-btn"
             title="Align Right"
           >
-            <AlignRight className="w-4 h-4" />
+            <AlignRight />
           </button>
 
-          <div className="w-px h-6 bg-gray-300 mx-2" />
+          <div className="toolbar-divider" />
 
           <select
             onChange={(e) => execCommand('formatBlock', e.target.value)}
-            className="px-2 py-1 border border-gray-300 rounded text-sm"
+            className="toolbar-select"
             defaultValue="p"
           >
             <option value="p">Normal</option>
@@ -201,28 +197,25 @@ export default function docs_frontend() {
         </div>
       </div>
 
-      {/* Document List Sidebar */}
       {showDocList && (
-        <div className="absolute left-0 top-24 w-64 bg-white border-r border-gray-200 shadow-lg z-10 max-h-[calc(100vh-6rem)] overflow-y-auto">
-          <div className="p-4">
+        <div className="sidebar">
+          <div className="sidebar-content">
             <button
               onClick={createNewDocument}
-              className="w-full flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mb-4"
+              className="new-doc-btn"
             >
-              <Plus className="w-4 h-4" />
+              <Plus />
               New Document
             </button>
-            <div className="space-y-2">
+            <div className="doc-list">
               {documents.map(doc => (
                 <button
                   key={doc.id}
                   onClick={() => switchDocument(doc.id)}
-                  className={`w-full text-left px-3 py-2 rounded hover:bg-gray-100 ${
-                    doc.id === currentDocId ? 'bg-blue-50 border border-blue-200' : ''
-                  }`}
+                  className={doc.id === currentDocId ? 'doc-item active' : 'doc-item'}
                 >
-                  <div className="font-medium text-sm">{doc.title}</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="doc-title">{doc.title}</div>
+                  <div className="doc-date">
                     {doc.lastModified.toLocaleString()}
                   </div>
                 </button>
@@ -232,14 +225,13 @@ export default function docs_frontend() {
         </div>
       )}
 
-      {/* Editor */}
-      <div className="flex-1 overflow-y-auto bg-gray-100 p-8">
-        <div className="max-w-4xl mx-auto bg-white shadow-lg min-h-full">
+      <div className="editor-container">
+        <div className="editor-paper">
           <div
             ref={editorRef}
             contentEditable
             onInput={handleInput}
-            className="p-16 outline-none min-h-full"
+            className="editor-content"
             style={{ fontSize: fontSize + 'px' }}
             suppressContentEditableWarning
           />
