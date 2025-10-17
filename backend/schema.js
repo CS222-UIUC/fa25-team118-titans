@@ -14,6 +14,8 @@ const typeDefs = gql`
     type Query {
         documents: [Document!]!
         document(id: ID!): Document
+        searchDocuments(keyword: String!): [Document!]!
+        recentDocuments(limit: Int = 10): [Document!]!
     }
 
     type Mutation {
@@ -34,6 +36,26 @@ const resolvers = {
             const r = res.rows[0];
             if (!r) return null;
             return { id: r.id, title: r.title, content: r.content, lastModified: r.last_modified };
+        },
+        searchDocuments: async(_, { keyword }) => {
+            const res = await pool.query(
+                `SELECT id, title, content, last_modified
+                 FROM documents
+                 WHERE title ILIKE $1 OR content ILIKE $1
+                 ORDER BY last_modified DESC`,
+                 [`%${keyword}%`]
+            );
+            return res.rows.map(r => ({ id: r.id, title: r.title, content: r.content, lastModified: r.last_modified }));
+        },
+        recentDocuments: async(_, { limit }) => {
+            const res = await pool.query(
+                `SELECT id, title, content, last_modified
+                 FROM documents
+                 ORDER BY last_modified DESC
+                 LIMIT $1`,
+                 [limit]
+            );
+            return res.rows.map(r => ({ id: r.id, title: r.title, content: r.content, lastModified: r.last_modified }));
         }
     },
 
