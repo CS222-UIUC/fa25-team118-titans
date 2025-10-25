@@ -167,7 +167,7 @@ export default function DocsFrontend() {
           id: d.id,
           title: d.title,
           content: d.content || '<p></p>',
-          lastModified: d.lastModified ? new Data(d.lastModified) : new Date(),
+          lastModified: d.lastModified ? new data(d.lastModified) : new Date(),
         }));
         setDocuments(docs);
         if (docs.length > 0) setCurrentDocId(docs[0].id);
