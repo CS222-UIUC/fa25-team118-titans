@@ -104,7 +104,7 @@ export default function DocsFrontend() {
       } else {
         const updated = await updateDocumentApollo(currentDocId, localDoc.title, html);
         if (updated) {
-          setDocuments(docs => docs.map(d => d.id === currentDocId ? { ...d, content: updated.content, lastModified: updated.lastModified } : d));
+          setDocuments(docs => docs.map(d => d.id === currentDocId ? { ...d, lastModified: updated.lastModified } : d));
           refetch();
         }
       }
@@ -198,7 +198,7 @@ export default function DocsFrontend() {
             onClick={handleSave}
             className="save-btn"
           >
-            <Save style={{width: '16px', height: '16px'}} />
+            <Save style={{ width: '16px', height: '16px' }} />
             Save
           </button>
         </div>
@@ -219,7 +219,7 @@ export default function DocsFrontend() {
             Redo
           </button>
           <div className="toolbar-divider" />
-          
+
           <select
             onChange={handleFontSizeChange}
             value={fontSize}
