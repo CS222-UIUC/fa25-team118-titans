@@ -104,7 +104,8 @@ export default function DocsFrontend() {
       } else {
         const updated = await updateDocumentApollo(currentDocId, localDoc.title, html);
         if (updated) {
-          setDocuments(docs => docs.map(d => d.id === currentDocId ? { ...d, content: updated.content, lastModified: updated.lastModified } : d));
+          // Only update lastModified, not content, to avoid interfering with active editing
+          setDocuments(docs => docs.map(d => d.id === currentDocId ? { ...d, lastModified: updated.lastModified } : d));
           refetch();
         }
       }
@@ -145,7 +146,13 @@ export default function DocsFrontend() {
   };
 
   const handleInput = () => {
-    handleSave();
+    // Debounce the save to avoid interfering with typing
+    if (handleInput.timeout) {
+      clearTimeout(handleInput.timeout);
+    }
+    handleInput.timeout = setTimeout(() => {
+      handleSave();
+    }, 1000); // Save after 1 second of no typing
   };
 
   const handleFontSizeChange = (e) => {
@@ -167,7 +174,7 @@ export default function DocsFrontend() {
           id: d.id,
           title: d.title,
           content: d.content || '<p></p>',
-          lastModified: d.lastModified ? new Data(d.lastModified) : new Date(),
+          lastModified: d.lastModified ? new Date(d.lastModified) : new Date(),
         }));
         setDocuments(docs);
         if (docs.length > 0) setCurrentDocId(docs[0].id);
@@ -198,7 +205,7 @@ export default function DocsFrontend() {
             onClick={handleSave}
             className="save-btn"
           >
-            <Save style={{width: '16px', height: '16px'}} />
+            <Save style={{ width: '16px', height: '16px' }} />
             Save
           </button>
         </div>
@@ -219,7 +226,7 @@ export default function DocsFrontend() {
             Redo
           </button>
           <div className="toolbar-divider" />
-          
+
           <select
             onChange={handleFontSizeChange}
             value={fontSize}
