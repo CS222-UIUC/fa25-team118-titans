@@ -25,13 +25,6 @@ export default function DocsFrontend() {
     }
   `;
 
-  // next step (if interested): adding query into react below
-  const RECENT_DOCUMENTS = gql`
-    query RecentDocuments($limit: Int) {
-      recentDocuments(limit: $limit) { id title content lastModified }
-    }
-  `;
-
   const CREATE_DOCUMENT = gql`
     mutation CreateDocument($title: String!, $content: String) {
       createDocument(title: $title, content: $content) { id title content lastModified }
@@ -167,7 +160,7 @@ export default function DocsFrontend() {
           id: d.id,
           title: d.title,
           content: d.content || '<p></p>',
-          lastModified: d.lastModified ? new Data(d.lastModified) : new Date(),
+          lastModified: d.lastModified ? new data(d.lastModified) : new Date(),
         }));
         setDocuments(docs);
         if (docs.length > 0) setCurrentDocId(docs[0].id);
