@@ -35,7 +35,7 @@ fi
 
 USER_EXISTS=$(runuser -u postgres -- psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'")
 if [ "$USER_EXISTS" != "1" ]; then
-  echo "➡️ Creating user: $DB_USER"
+  echo "Creating user: $DB_USER"
   runuser -u postgres -- psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';"
 else
   echo "User $DB_USER already exists"
