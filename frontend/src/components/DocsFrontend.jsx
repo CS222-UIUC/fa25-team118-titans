@@ -19,13 +19,12 @@ export default function DocsFrontend() {
  };
 
 
- const currentDoc = documents.find(d => d.id === currentDocId);
- const GET_DOCUMENTS = gql`
-   query GetDocuments {
-     documents { id title content lastModified }
-   }
- `;
-
+  const currentDoc = documents.find(d => d.id === currentDocId);
+  const GET_DOCUMENTS = gql`
+    query GetDocuments {
+      documents { id title content lastModified }
+    }
+  `;
 
  const CREATE_DOCUMENT = gql`
    mutation CreateDocument($title: String!, $content: String) {
@@ -41,7 +40,7 @@ export default function DocsFrontend() {
  `;
 
 
-  const { data, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });
+ const { data, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });
  const [createDoc] = useMutation(CREATE_DOCUMENT);
  const [updateDoc] = useMutation(UPDATE_DOCUMENT);
 
@@ -206,14 +205,13 @@ export default function DocsFrontend() {
  };
 
 
- const handleFontSizeChange = (e) => {
-   const size = e.target.value;
-   setFontSize(size);
-   if (editorRef.current) {
-     editorRef.current.style.fontSize = size + 'px';
-   }
- };
-
+  const handleFontSizeChange = (e) => {
+    const size = e.target.value;
+    setFontSize(size);
+    if (editorRef.current) {
+      editorRef.current.style.fontSize = size + 'px';
+    }
+  };
 
  return (
    <div className="docs-container">
