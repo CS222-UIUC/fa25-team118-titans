@@ -25,13 +25,6 @@ export default function DocsFrontend() {
     }
   `;
 
-  // next step (if interested): adding query into react below
-  const RECENT_DOCUMENTS = gql`
-    query RecentDocuments($limit: Int) {
-      recentDocuments(limit: $limit) { id title content lastModified }
-    }
-  `;
-
   const CREATE_DOCUMENT = gql`
     mutation CreateDocument($title: String!, $content: String) {
       createDocument(title: $title, content: $content) { id title content lastModified }

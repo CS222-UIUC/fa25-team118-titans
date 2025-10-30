@@ -1,5 +1,5 @@
 const { gql } = require("apollo-server-express");
-const pool = require('./db');
+const pool = require("../config/db");
 
 const typeDefs = gql`
     scalar DateTime
