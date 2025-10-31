@@ -54,6 +54,49 @@ export default function DocsFrontend() {
    }
  }, [data]);
 
+ // Keyboard shortcuts handler
+ useEffect(() => {
+  const handleKeyDown = (e) => {
+    const isMod = e.metaKey || e.ctrlKey;
+    if (!isMod) return;
+    switch(e.key.toLowerCase()) {
+      case 'b':
+        e.preventDefault();
+        execCommand('bold');
+        break;
+      case 'i':
+        e.preventDefault();
+        execCommand('italic');
+        break;
+      case 'u':
+        e.preventDefault();
+        execCommand('underline');
+        break;
+      case 's':
+        e.preventDefault();
+        handleSave();
+        break;
+      case 'z':
+        if (e.shiftKey) {
+          e.preventDefault();
+          execCommand('redo');
+        } else {
+          e.preventDefault();
+          execCommand('undo');
+        }
+        break;
+      case 'y':
+        e.preventDefault();
+        execCommand('redo');
+        break;
+      default:
+        break;
+    }
+  };
+  document.addEventListener('keydown', handleKeyDown);
+  return () => document.removeEventListener('keydown', handleKeyDown);
+}, [currentDocId]);
+
 
  // keep editor HTML in sync when doc changes
  useEffect(() => {
