@@ -11,6 +11,12 @@ service postgresql start
 node index.js
 ```
 
+# Run Backend Testing
+```bash
+cd backend
+npm test
+```
+
 # Run Frontend
 ```bash
 cd frontend
@@ -18,7 +24,7 @@ npm install
 npm start
 ```
 
-# Run Testing
+# Run Frontend Testing
 ```bash
 cd frontend
 npm test
