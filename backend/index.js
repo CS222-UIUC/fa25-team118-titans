@@ -3,8 +3,8 @@ const express = require("express");
 const { ApolloServer } = require("apollo-server-express");
 const cors = require("cors");
 
-const { typeDefs, resolvers } = require("./schema");
-const initDb = require('./init_db');
+const { typeDefs, resolvers } = require("./graphql/schema");
+const initDb = require("./config/init_db");
 
 const app = express();
 app.use(cors()); // needed only when frontend and backend are hosted separately, which they are!
