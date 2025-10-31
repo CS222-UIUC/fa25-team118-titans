@@ -13,9 +13,9 @@ echo "Updating apt and installing PostgreSQL"
 apt update -y
 apt install -y postgresql postgresql-contrib locales
 
-# echo "Setting locale to en_US.UTF-8"
-# locale-gen en_US.UTF-8
-# update-locale LANG=en_US.UTF-8
+echo "Setting locale to en_US.UTF-8"
+locale-gen en_US.UTF-8
+update-locale LANG=en_US.UTF-8
 
 echo "Starting PostgreSQL cluster"
 pg_ctlcluster $PG_VERSION main start || \

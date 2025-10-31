@@ -11,14 +11,6 @@ export default function DocsFrontend() {
   const editorRef = useRef(null);
   const [loadingLocal, setLoadingLocal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const saveTimeoutRef = useRef(null);
-
-  const debouncedSave = () => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(() => {
-      handleSave();
-    }, 1000);
-  };
 
   const currentDoc = documents.find(d => d.id === currentDocId);
   const GET_DOCUMENTS = gql`
@@ -30,12 +22,6 @@ export default function DocsFrontend() {
   const SEARCH_DOCUMENTS = gql`
     query SearchDocuments($keyword: String!) {
       searchDocuments(keyword: $keyword) { id title content lastModified }
-    }
-  `;
-
-  const RECENT_DOCUMENTS = gql`
-    query RecentDocuments($limit: Int) {
-      recentDocuments(limit: $limit) { id title content lastModified }
     }
   `;
 
@@ -70,7 +56,7 @@ export default function DocsFrontend() {
 
   // keep editor HTML in sync when doc changes
   useEffect(() => {
-    if (editorRef.current && currentDoc && !editorRef.current.contains(document.activeElement)) {
+    if (editorRef.current && currentDoc) {
       editorRef.current.innerHTML = currentDoc.content || '';
     }
   }, [currentDocId, currentDoc]);
@@ -94,10 +80,6 @@ export default function DocsFrontend() {
   };
 
   const handleSave = async () => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = null;
-    }
     if (!editorRef.current) return;
     const html = editorRef.current.innerHTML;
     setSaving(true);
@@ -115,7 +97,7 @@ export default function DocsFrontend() {
       } else {
         const updated = await updateDocumentApollo(currentDocId, localDoc.title, html);
         if (updated) {
-          setDocuments(docs => docs.map(d => d.id === currentDocId ? { ...d, lastModified: updated.lastModified } : d));
+          setDocuments(docs => docs.map(d => d.id === currentDocId ? { ...d, content: updated.content, lastModified: updated.lastModified } : d));
           refetch();
         }
       }
@@ -146,24 +128,17 @@ export default function DocsFrontend() {
     };
     setDocuments([...documents, newDoc]);
     setCurrentDocId(newId);
-    if (editorRef.current) {
-      editorRef.current.innerHTML = newDoc.content;
-    }
     setShowDocList(false);
   };
 
-  const switchDocument = async (id) => {
-    await handleSave();
+  const switchDocument = (id) => {
+    handleSave();
     setCurrentDocId(id);
-    if (editorRef.current) {
-      const newDoc = documents.find(d => d.id === id);
-      editorRef.current.innerHTML = newDoc ? newDoc.content || '' : '';
-    }
     setShowDocList(false);
   };
 
   const handleInput = () => {
-    debouncedSave();
+    handleSave();
   };
 
   const handleFontSizeChange = (e) => {
@@ -174,6 +149,7 @@ export default function DocsFrontend() {
     }
   };
 
+  // next step: use the handleSearch to filter out documents by searched keyword
   const handleSearch = async (keyword) => {
     if (!keyword.trim()) return;
 
@@ -184,7 +160,7 @@ export default function DocsFrontend() {
           id: d.id,
           title: d.title,
           content: d.content || '<p></p>',
-          lastModified: d.lastModified ? new Date(d.lastModified) : new Date(),
+          lastModified: d.lastModified ? new data(d.lastModified) : new Date(),
         }));
         setDocuments(docs);
         if (docs.length > 0) setCurrentDocId(docs[0].id);
@@ -215,7 +191,7 @@ export default function DocsFrontend() {
             onClick={handleSave}
             className="save-btn"
           >
-            <Save style={{ width: '16px', height: '16px' }} />
+            <Save style={{width: '16px', height: '16px'}} />
             Save
           </button>
         </div>
@@ -236,7 +212,7 @@ export default function DocsFrontend() {
             Redo
           </button>
           <div className="toolbar-divider" />
-
+          
           <select
             onChange={handleFontSizeChange}
             value={fontSize}
