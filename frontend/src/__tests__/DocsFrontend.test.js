@@ -2,9 +2,9 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import { gql } from '@apollo/client';
-import DocsFrontend from './DocsFrontend';
+import DocsFrontend from '../components/DocsFrontend';
 
-jest.mock('./DocsFrontend.css', () => ({}));
+jest.mock('../components/DocsFrontend.css', () => ({}));
 
 jest.mock('lucide-react', () => ({
   Bold: () => <div data-testid="bold-icon" />,

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import { gql } from '@apollo/client';
-import App from './App';
+import App from '../App';
 
 const mocks = [
   {
