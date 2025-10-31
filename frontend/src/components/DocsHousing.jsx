@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FileText, Plus, Grid, List, Clock, Star, Trash2, MoreVertical, Search, Folder, Home, Settings, ArrowLeft, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save } from 'lucide-react';
+import { FileText, Plus, Grid, List, Clock, Star, Trash2, Search, Folder, Home, ArrowLeft, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save } from 'lucide-react';
 
 export default function DocsHousing() {
   const [documents, setDocuments] = useState([
@@ -23,7 +23,7 @@ export default function DocsHousing() {
     if (editorRef.current && currentDoc) {
       editorRef.current.innerHTML = currentDoc.content || '';
     }
-  }, [currentDocId]);
+  }, [currentDocId, currentDoc]);
 
   const execCommand = (command, value = null) => {
     document.execCommand(command, false, value);
