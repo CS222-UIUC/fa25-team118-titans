@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation, gql, useLazyQuery } from '@apollo/client';
+import { useQuery, useMutation, gql } from '@apollo/client';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu } from 'lucide-react';
 import './DocsFrontend.css';
 
@@ -8,13 +8,9 @@ export default function DocsFrontend() {
  const [documents, setDocuments] = useState([]);
  const [currentDocId, setCurrentDocId] = useState(null);
  const [showDocList, setShowDocList] = useState(false);
- const [fontSize, setFontSize] = useState('16');
- const editorRef = useRef(null);
- const [loadingLocal, setLoadingLocal] = useState(false);
- const [saving, setSaving] = useState(false);
- const saveTimeoutRef = useRef(null);
-
-
+  const [fontSize, setFontSize] = useState('16');
+  const editorRef = useRef(null);
+  const saveTimeoutRef = useRef(null);
  const debouncedSave = () => {
    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
    saveTimeoutRef.current = setTimeout(() => {
@@ -27,20 +23,6 @@ export default function DocsFrontend() {
  const GET_DOCUMENTS = gql`
    query GetDocuments {
      documents { id title content lastModified }
-   }
- `;
-
-
- const SEARCH_DOCUMENTS = gql`
-   query SearchDocuments($keyword: String!) {
-     searchDocuments(keyword: $keyword) { id title content lastModified }
-   }
- `;
-
-
- const RECENT_DOCUMENTS = gql`
-   query RecentDocuments($limit: Int) {
-     recentDocuments(limit: $limit) { id title content lastModified }
    }
  `;
 
@@ -59,8 +41,7 @@ export default function DocsFrontend() {
  `;
 
 
- const { data, loading, error, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });
- const [searchDocuments, { data: searchData, loading: searchLoading }] = useLazyQuery(SEARCH_DOCUMENTS);
+  const { data, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });
  const [createDoc] = useMutation(CREATE_DOCUMENT);
  const [updateDoc] = useMutation(UPDATE_DOCUMENT);
 
@@ -72,11 +53,6 @@ export default function DocsFrontend() {
      if (docs.length > 0) setCurrentDocId(docs[0].id);
    }
  }, [data]);
-
-
- useEffect(() => {
-   if (error) console.error('Error loading documents', error);
- }, [error]);
 
 
  // keep editor HTML in sync when doc changes
@@ -116,7 +92,6 @@ export default function DocsFrontend() {
    }
    if (!editorRef.current) return;
    const html = editorRef.current.innerHTML;
-   setSaving(true);
    try {
      const localDoc = documents.find(d => String(d.id) === String(currentDocId));
      if (!localDoc) {
@@ -140,7 +115,6 @@ export default function DocsFrontend() {
    } catch (err) {
      console.error('Save failed', err);
    } finally {
-     setSaving(false);
    }
  };
 
@@ -194,28 +168,6 @@ export default function DocsFrontend() {
    setFontSize(size);
    if (editorRef.current) {
      editorRef.current.style.fontSize = size + 'px';
-   }
- };
-
-
- const handleSearch = async (keyword) => {
-   if (!keyword.trim()) return;
-
-
-   try {
-     const res = await searchDocuments({ variables: { keyword } });
-     if (res.data?.searchDocuments) {
-       const docs = res.data.searchDocuments.map(d => ({
-         id: d.id,
-         title: d.title,
-         content: d.content || '<p></p>',
-         lastModified: d.lastModified ? new Date(d.lastModified) : new Date(),
-       }));
-       setDocuments(docs);
-       if (docs.length > 0) setCurrentDocId(docs[0].id);
-     }
-   } catch (err) {
-     console.error("Search failed", err);
    }
  };
 

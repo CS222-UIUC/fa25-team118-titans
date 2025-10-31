@@ -18,6 +18,13 @@ npm install
 npm start
 ```
 
+# Run Testing
+```bash
+cd frontend
+npm test
+npx eslint src/ --ext .js,.jsx 
+```
+
 # View App
 - Frontend: `localhost:3000`
 - GraphQL Playground: `localhost:4000/graphql`
