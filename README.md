@@ -15,6 +15,7 @@ node index.js
 ```bash
 cd backend
 npm test
+npm run lint
 ```
 
 # Run Frontend

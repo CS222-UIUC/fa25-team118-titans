@@ -1,4 +1,4 @@
-const { describe, it, expect } = require('@jest/globals');
+const { describe, expect } = require('@jest/globals');
 
 const pool = require("../config/db");
 const init = require("../config/init_db")
