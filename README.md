@@ -71,3 +71,4 @@ mutation {
   }
 }
 ```
+Created AWS EC2 infrastructure skeleton. Docs coming soon!
