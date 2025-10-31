@@ -11,6 +11,14 @@ export default function DocsFrontend() {
   const editorRef = useRef(null);
   const [loadingLocal, setLoadingLocal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const saveTimeoutRef = useRef(null);
+
+  const debouncedSave = () => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      handleSave();
+    }, 1000);
+  };
 
   const currentDoc = documents.find(d => d.id === currentDocId);
   const GET_DOCUMENTS = gql`
@@ -25,7 +33,6 @@ export default function DocsFrontend() {
     }
   `;
 
-  // next step (if interested): adding query into react below
   const RECENT_DOCUMENTS = gql`
     query RecentDocuments($limit: Int) {
       recentDocuments(limit: $limit) { id title content lastModified }
@@ -63,7 +70,7 @@ export default function DocsFrontend() {
 
   // keep editor HTML in sync when doc changes
   useEffect(() => {
-    if (editorRef.current && currentDoc) {
+    if (editorRef.current && currentDoc && !editorRef.current.contains(document.activeElement)) {
       editorRef.current.innerHTML = currentDoc.content || '';
     }
   }, [currentDocId, currentDoc]);
@@ -87,6 +94,10 @@ export default function DocsFrontend() {
   };
 
   const handleSave = async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
     if (!editorRef.current) return;
     const html = editorRef.current.innerHTML;
     setSaving(true);
@@ -135,17 +146,24 @@ export default function DocsFrontend() {
     };
     setDocuments([...documents, newDoc]);
     setCurrentDocId(newId);
+    if (editorRef.current) {
+      editorRef.current.innerHTML = newDoc.content;
+    }
     setShowDocList(false);
   };
 
-  const switchDocument = (id) => {
-    handleSave();
+  const switchDocument = async (id) => {
+    await handleSave();
     setCurrentDocId(id);
+    if (editorRef.current) {
+      const newDoc = documents.find(d => d.id === id);
+      editorRef.current.innerHTML = newDoc ? newDoc.content || '' : '';
+    }
     setShowDocList(false);
   };
 
   const handleInput = () => {
-    handleSave();
+    debouncedSave();
   };
 
   const handleFontSizeChange = (e) => {
@@ -156,7 +174,6 @@ export default function DocsFrontend() {
     }
   };
 
-  // next step: use the handleSearch to filter out documents by searched keyword
   const handleSearch = async (keyword) => {
     if (!keyword.trim()) return;
 
