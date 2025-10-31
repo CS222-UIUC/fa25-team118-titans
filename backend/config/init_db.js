@@ -1,6 +1,6 @@
-const pool = require('./db');
+const pool = require("./db");
 
-// creating table on our backedn if not already there!
+// creating table on our backend if not already there!
 async function init() {
   const client = await pool.connect();
   try {
