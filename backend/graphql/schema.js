@@ -11,9 +11,16 @@ const typeDefs = gql`
         lastModified: DateTime
     }
 
+    type Version {
+        id: ID!
+        content: String!
+        savedAt: DateTime!
+    }
+
     type Query {
         documents: [Document!]!
         document(id: ID!): Document
+        documentVersions(documentId: ID!): [Version!]!
     }
 
     type Mutation {
@@ -26,24 +33,31 @@ const typeDefs = gql`
 const resolvers = {
     Query: {
         documents: async () => {
-            const res = await pool.query('SELECT id, title, content, last_modified FROM documents ORDER BY id');
+            const res = await pool.query("SELECT id, title, content, last_modified FROM documents ORDER BY id");
             return res.rows.map(r => ({ id: r.id, title: r.title, content: r.content, lastModified: r.last_modified }));
         },
         document: async (_, { id }) => {
-            const res = await pool.query('SELECT id, title, content, last_modified FROM documents WHERE id = $1', [id]);
+            const res = await pool.query("SELECT id, title, content, last_modified FROM documents WHERE id = $1", [id]);
             const r = res.rows[0];
             if (!r) return null;
             return { id: r.id, title: r.title, content: r.content, lastModified: r.last_modified };
+        },
+        documentVersions: async(_, { documentId }) => {
+            const res = await pool.query("SELECT id, content, saved_at FROM document_history WHERE document_id = $1 ORDER BY saved_at DESC", [documentId]);
+            return res.rows.map(r => ({ id: r.id, content: r.content, savedAt: r.saved_at }));
         }
     },
 
     Mutation: {
         createDocument: async (_, { title, content }) => {
             const res = await pool.query(
-                'INSERT INTO documents(title, content, last_modified) VALUES ($1, $2, now()) RETURNING id, title, content, last_modified',
+                "INSERT INTO documents(title, content, last_modified) VALUES ($1, $2, now()) RETURNING id, title, content, last_modified",
                 [title, content]
             );
             const r = res.rows[0];
+            await pool.query("INSERT INTO document_history(document_id, content) VALUES ($1, $2)", 
+                [r.id, content || ""]
+            );
             return { id: r.id, title: r.title, content: r.content, lastModified: r.last_modified };
         },
 
@@ -52,6 +66,17 @@ const resolvers = {
             const fields = [];
             const values = [];
             let idx = 1;
+
+            /*
+             * NOTE: this is in a separate if block because content must be saved to history
+             * BEFORE the main table is updated
+             */
+            if (content !== undefined) {
+                await pool.query("INSERT INTO document_history(document_id, content) VALUES ($1, $2)",
+                    [id, content]
+                );
+            }
+
             if (title !== undefined) { fields.push(`title = $${idx++}`); values.push(title); }
             if (content !== undefined) { fields.push(`content = $${idx++}`); values.push(content); }
             fields.push(`last_modified = now()`);
@@ -62,12 +87,12 @@ const resolvers = {
 
             const res = await pool.query(query, values);
             const r = res.rows[0];
-            if (!r) throw new Error('Document not found');
+            if (!r) throw new Error("Document not found");
             return { id: r.id, title: r.title, content: r.content, lastModified: r.last_modified };
         },
 
         deleteDocument: async (_, { id }) => {
-            const res = await pool.query('DELETE FROM documents WHERE id = $1', [id]);
+            const res = await pool.query("DELETE FROM documents WHERE id = $1", [id]);
             return res.rowCount > 0;
         }
     }
