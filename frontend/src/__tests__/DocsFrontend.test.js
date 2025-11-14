@@ -17,6 +17,9 @@ jest.mock('lucide-react', () => ({
   FileText: () => <div data-testid="file-text-icon" />,
   Plus: () => <div data-testid="plus-icon" />,
   Menu: () => <div data-testid="menu-icon" />,
+  Sun: () => <div data-testid="sun-icon" />,
+  Moon: () => <div data-testid="moon-icon" />,
+  Clock: () => <div data-testid="clock-icon" />,
 }));
 
 beforeEach(() => {

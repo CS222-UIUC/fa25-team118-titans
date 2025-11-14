@@ -1,23 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock } from 'lucide-react';
 import './DocsFrontend.css';
+import VersionHistoryModal from "./VersionHistoryModal";
 
 
 export default function DocsFrontend() {
- const [documents, setDocuments] = useState([]);
- const [currentDocId, setCurrentDocId] = useState(null);
- const [showDocList, setShowDocList] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [currentDocId, setCurrentDocId] = useState(null);
+  const [showDocList, setShowDocList] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [fontSize, setFontSize] = useState('16');
   const [darkMode, setDarkMode] = useState(false);
   const editorRef = useRef(null);
   const saveTimeoutRef = useRef(null);
- const debouncedSave = () => {
-   if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-   saveTimeoutRef.current = setTimeout(() => {
-     handleSave();
-   }, 1000);
- };
+  const debouncedSave = () => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      handleSave();
+    }, 1000);
+  };
 
 
   const currentDoc = documents.find(d => d.id === currentDocId);
@@ -229,6 +231,15 @@ export default function DocsFrontend() {
            onChange={handleTitleChange}
            className="doc-title-input"
          />
+
+         <button
+            onClick={() => setShowHistory(true)}
+            className="save-btn"
+         >
+            <Clock style={{ width: "16px", height: "16px" }} />
+            History
+         </button>
+
          <button
            onClick={handleSave}
            className="save-btn"
@@ -374,8 +385,11 @@ export default function DocsFrontend() {
            </div>
          </div>
        </div>
-     )}
+      )}
 
+      {showHistory && (
+        <VersionHistoryModal documentId={currentDocId} onClose={() => setShowHistory(false)} />
+      )}
 
      <div className="editor-container">
        <div className="editor-paper">
