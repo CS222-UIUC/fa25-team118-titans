@@ -61,7 +61,7 @@ const emptyVersionMocks = [
 describe("VersionHistoryModal", () => {
   test("renders loading and version list", async () => {
     render(
-      <MockedProvider mocks={versionMocks} addTypename={false}>
+      <MockedProvider mocks={versionMocks}>
         <VersionHistoryModal documentId="1" onClose={jest.fn()} />
       </MockedProvider>
     );
@@ -76,7 +76,7 @@ describe("VersionHistoryModal", () => {
 
   test("renders 'No versions found' when list is empty", async () => {
     render(
-      <MockedProvider mocks={emptyVersionMocks} addTypename={false}>
+      <MockedProvider mocks={emptyVersionMocks}>
         <VersionHistoryModal documentId="1" onClose={jest.fn()} />
       </MockedProvider>
     );
@@ -88,7 +88,7 @@ describe("VersionHistoryModal", () => {
 
   test("renders nothing if no documentId provided", () => {
     const { container } = render(
-      <MockedProvider mocks={versionMocks} addTypename={false}>
+      <MockedProvider mocks={versionMocks}>
         <VersionHistoryModal onClose={jest.fn()} />
       </MockedProvider>
     );
