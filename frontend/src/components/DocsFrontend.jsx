@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useQuery, useMutation, gql } from "@apollo/client";
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Clock } from "lucide-react";
-import "./DocsFrontend.css";
-import VersionHistoryModal from "./VersionHistoryModal";
+import React, { useState, useRef, useEffect } from 'react';
+import { useQuery, useMutation, gql } from '@apollo/client';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon } from 'lucide-react';
+import './DocsFrontend.css';
 
 
 export default function DocsFrontend() {
@@ -11,6 +10,7 @@ export default function DocsFrontend() {
   const [showDocList, setShowDocList] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [fontSize, setFontSize] = useState('16');
+  const [darkMode, setDarkMode] = useState(false);
   const editorRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const debouncedSave = () => {
@@ -111,8 +111,6 @@ export default function DocsFrontend() {
    document.execCommand(command, false, value);
    editorRef.current?.focus();
  };
-
-
 
 
  const createDocumentApollo = async (title, content) => {
@@ -216,7 +214,7 @@ export default function DocsFrontend() {
   };
 
  return (
-   <div className="docs-container">
+   <div className={`docs-container ${darkMode ? 'dark-mode' : ''}`}>
      <div className="docs-header">
        <div className="header-content">
          <button
@@ -247,6 +245,13 @@ export default function DocsFrontend() {
          >
            <Save style={{ width: '16px', height: '16px' }} />
            Save
+         </button>
+         <button
+           onClick={() => setDarkMode(!darkMode)}
+           className="theme-toggle-btn"
+           title={darkMode ? 'Light Mode' : 'Dark Mode'}
+         >
+           {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
          </button>
        </div>
      </div>
@@ -400,4 +405,3 @@ export default function DocsFrontend() {
    </div>
  );
 }
-
