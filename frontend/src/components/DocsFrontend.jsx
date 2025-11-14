@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock } from 'lucide-react';
 import './DocsFrontend.css';
+import VersionHistoryModal from "./VersionHistoryModal";
 
 
 export default function DocsFrontend() {
