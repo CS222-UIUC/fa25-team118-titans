@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock, Code } from 'lucide-react';
 import './DocsFrontend.css';
 import VersionHistoryModal from "./VersionHistoryModal";
 
@@ -35,22 +35,36 @@ export default function DocsFrontend() {
   const currentDoc = documents.find(d => d.id === currentDocId);
   const GET_DOCUMENTS = gql`
     query GetDocuments {
-      documents { id title content lastModified }
+      documents {
+        id
+        title
+        content
+        lastModified
+      }
     }
   `;
 
- const CREATE_DOCUMENT = gql`
-   mutation CreateDocument($title: String!, $content: String) {
-     createDocument(title: $title, content: $content) { id title content lastModified }
-   }
- `;
+  const CREATE_DOCUMENT = gql`
+    mutation CreateDocument($title: String!, $content: String) {
+      createDocument(title: $title, content: $content) {
+        id
+        title
+        content
+        lastModified
+      }
+    }
+  `;
 
-
- const UPDATE_DOCUMENT = gql`
-   mutation UpdateDocument($id: ID!, $title: String, $content: String) {
-     updateDocument(id: $id, title: $title, content: $content) { id title content lastModified }
-   }
- `;
+  const UPDATE_DOCUMENT = gql`
+    mutation UpdateDocument($id: ID!, $title: String, $content: String) {
+      updateDocument(id: $id, title: $title, content: $content) {
+        id
+        title
+        content
+        lastModified
+      }
+    }
+  `;
 
 
  const { data, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });
@@ -357,7 +371,15 @@ export default function DocsFrontend() {
     refreshMatches({ skipFocus: true });
   };
 
- const handleInput = () => {
+  const insertCodeBlock = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    const snippet = '<pre class="code-block"><code>// code snippet</code></pre><p><br/></p>';
+    document.execCommand('insertHTML', false, snippet);
+    debouncedSave();
+  };
+
+  const handleInput = () => {
    if (hasSearchTerm) {
      refreshMatches({ keepIndex: true, skipFocus: true });
    }
@@ -508,6 +530,16 @@ export default function DocsFrontend() {
 
         <div className="toolbar-divider" />
 
+        <button
+          type="button"
+          onClick={insertCodeBlock}
+          className="icon-btn"
+          title="Insert Code Block"
+        >
+          <Code />
+        </button>
+
+        <div className="toolbar-divider" />
         <button
           type="button"
           onClick={() => setShowSearchTools(prev => !prev)}

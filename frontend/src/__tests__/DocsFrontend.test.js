@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
-import { gql } from '@apollo/client';
+import { gql, InMemoryCache } from '@apollo/client';
 import DocsFrontend from '../components/DocsFrontend';
 
 jest.mock('../components/DocsFrontend.css', () => ({}));
@@ -20,6 +20,7 @@ jest.mock('lucide-react', () => ({
   Sun: () => <div data-testid="sun-icon" />,
   Moon: () => <div data-testid="moon-icon" />,
   Clock: () => <div data-testid="clock-icon" />,
+  Code: () => <div data-testid="code-icon" />,
 }));
 
 beforeEach(() => {
@@ -58,7 +59,7 @@ const mocks = [
 
 const renderWithProviders = (component) => {
   return render(
-    <MockedProvider mocks={mocks}>
+    <MockedProvider mocks={mocks} cache={new InMemoryCache()}>
       {component}
     </MockedProvider>
   );
@@ -134,6 +135,23 @@ describe('DocsFrontend', () => {
     fireEvent.click(boldButton);
 
     expect(document.execCommand).toHaveBeenCalledWith('bold', false, null);
+  });
+
+  test('inserts a code block snippet', async () => {
+    renderWithProviders(<DocsFrontend />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('code-icon')).toBeInTheDocument();
+    });
+
+    const codeButton = screen.getByTestId('code-icon').closest('button');
+    fireEvent.click(codeButton);
+
+    expect(document.execCommand).toHaveBeenCalledWith(
+      'insertHTML',
+      false,
+      expect.stringContaining('code-block')
+    );
   });
 
   test('find and replace updates editor content', async () => {
