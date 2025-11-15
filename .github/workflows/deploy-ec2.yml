@@ -1,0 +1,119 @@
+name: Build & Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-push-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_SSH_PORT: ${{ secrets.EC2_SSH_PORT }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (for cross-platform builds)
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ env.DOCKER_USERNAME }}/fa25-team118-backend:latest
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ env.DOCKER_USERNAME }}/fa25-team118-frontend:latest
+
+      - name: Prepare deploy script
+        run: |
+          cat > deploy.sh <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          echo "Pulling images on remote host and restarting compose..."
+          cd ~/fa25-team118-titans || exit 0
+          docker compose pull || true
+          docker compose up -d --remove-orphans
+          EOF
+          chmod +x deploy.sh
+
+      - name: Start ssh-agent and add private key (from env)
+        env:
+          EC2_SSH_KEY: ${{ env.EC2_SSH_KEY }}
+        run: |
+          # Decode if the key is base64-encoded in the env; otherwise expect raw PEM.
+          set -euo pipefail
+          echo "Preparing SSH key..."
+          if echo "$EC2_SSH_KEY" | grep -q "BEGIN"; then
+            echo "$EC2_SSH_KEY" > /tmp/deploy_key
+          else
+            echo "$EC2_SSH_KEY" | base64 --decode > /tmp/deploy_key
+          fi
+          chmod 600 /tmp/deploy_key
+          eval "$(ssh-agent -s)"
+          ssh-add /tmp/deploy_key
+
+      - name: Ensure remote host is known
+        run: |
+          PORT=${EC2_SSH_PORT}
+          PORT=${PORT:-22}
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$PORT" -H "${EC2_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Copy files to EC2 via scp
+        run: |
+          PORT=${EC2_SSH_PORT}
+          PORT=${PORT:-22}
+          mkdir -p ./deploy_tmp
+          cp docker-compose.yml deploy.sh ./deploy_tmp/
+          scp -P "$PORT" -r ./deploy_tmp/* "${EC2_USER}@${EC2_HOST}:~/fa25-team118-titans/"
+
+      - name: Execute remote deploy script and run health checks via SSH
+        run: |
+          PORT=${EC2_SSH_PORT}
+          PORT=${PORT:-22}
+          REMOTE="${EC2_USER}@${EC2_HOST}"
+          ssh -p "$PORT" "$REMOTE" 'cd ~/fa25-team118-titans && chmod +x ./deploy.sh && ./deploy.sh'
+
+          # run simple health checks with retries
+          HEALTH_REMOTE() {
+            ssh -p "$PORT" "$REMOTE" "$1"
+          }
+
+          echo "Waiting for frontend (http://localhost:3000)..."
+          i=0
+          until HEALTH_REMOTE 'curl -fsS -o /dev/null http://localhost:3000' || [ $i -ge 12 ]; do
+            i=$((i+1))
+            echo "frontend not ready yet (attempt $i) - sleeping 5s"
+            sleep 5
+          done
+          HEALTH_REMOTE 'curl -fsS http://localhost:3000 || echo FRONTEND_UNHEALTHY'
+
+          echo "Waiting for backend GraphQL (http://localhost:4000/graphql)..."
+          j=0
+          until HEALTH_REMOTE 'curl -fsS -o /dev/null http://localhost:4000/graphql' || [ $j -ge 12 ]; do
+            j=$((j+1))
+            echo "backend not ready yet (attempt $j) - sleeping 5s"
+            sleep 5
+          done
+          HEALTH_REMOTE 'curl -fsS http://localhost:4000/graphql || echo BACKEND_UNHEALTHY'
