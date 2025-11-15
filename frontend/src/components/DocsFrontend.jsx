@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock, Code } from 'lucide-react';
 import './DocsFrontend.css';
 import VersionHistoryModal from "./VersionHistoryModal";
 
@@ -352,6 +352,14 @@ export default function DocsFrontend() {
     refreshMatches({ skipFocus: true });
   };
 
+  const insertCodeBlock = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    const snippet = '<pre class="code-block"><code>// code snippet</code></pre><p><br/></p>';
+    document.execCommand('insertHTML', false, snippet);
+    debouncedSave();
+  };
+
  const handleInput = () => {
    if (hasSearchTerm) {
      refreshMatches({ keepIndex: true, skipFocus: true });
@@ -502,6 +510,17 @@ export default function DocsFrontend() {
          </select>
 
         <div className="toolbar-divider" />
+
+          <button
+            type="button"
+            onClick={insertCodeBlock}
+            className="icon-btn"
+            title="Insert Code Block"
+          >
+            <Code />
+          </button>
+
+          <div className="toolbar-divider" />
 
         <button
           type="button"
