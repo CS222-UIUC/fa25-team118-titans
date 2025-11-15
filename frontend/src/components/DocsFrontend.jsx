@@ -41,6 +41,14 @@ export default function DocsFrontend() {
 
  const CREATE_DOCUMENT = gql`
    mutation CreateDocument($title: String!, $content: String) {
+      };
+
+      const insertCodeBlock = () => {
+        if (!editorRef.current) return;
+        editorRef.current.focus();
+        const snippet = '<pre class="code-block"><code>// code snippet</code></pre><p><br/></p>';
+        document.execCommand('insertHTML', false, snippet);
+        debouncedSave();
      createDocument(title: $title, content: $content) { id title content lastModified }
    }
  `;
@@ -116,6 +124,11 @@ export default function DocsFrontend() {
      editorRef.current.innerHTML = currentDoc.content || '';
    }
  }, [currentDocId, currentDoc]);
+
+ useEffect(() => {
+    if (!currentDocId) return;
+    refetch();
+ }, [showHistory]);
 
 
  const execCommand = (command, value = null) => {
@@ -360,7 +373,7 @@ export default function DocsFrontend() {
     debouncedSave();
   };
 
- const handleInput = () => {
+  const handleInput = () => {
    if (hasSearchTerm) {
      refreshMatches({ keepIndex: true, skipFocus: true });
    }
@@ -511,17 +524,16 @@ export default function DocsFrontend() {
 
         <div className="toolbar-divider" />
 
-          <button
-            type="button"
-            onClick={insertCodeBlock}
-            className="icon-btn"
-            title="Insert Code Block"
-          >
-            <Code />
-          </button>
+        <button
+          type="button"
+          onClick={insertCodeBlock}
+          className="icon-btn"
+          title="Insert Code Block"
+        >
+          <Code />
+        </button>
 
-          <div className="toolbar-divider" />
-
+        <div className="toolbar-divider" />
         <button
           type="button"
           onClick={() => setShowSearchTools(prev => !prev)}

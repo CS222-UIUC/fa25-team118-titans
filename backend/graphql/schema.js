@@ -27,6 +27,7 @@ const typeDefs = gql`
         createDocument(title: String!, content: String): Document!
         updateDocument(id: ID!, title: String, content: String): Document!
         deleteDocument(id: ID!): Boolean!
+        restoreDocumentVersion(documentId: ID!, versionId: ID!): Document!
     }
 `;
 
@@ -94,7 +95,32 @@ const resolvers = {
         deleteDocument: async (_, { id }) => {
             const res = await pool.query("DELETE FROM documents WHERE id = $1", [id]);
             return res.rowCount > 0;
-        }
+        },
+
+        restoreDocumentVersion: async(_, { documentId, versionId }) => {
+            const versionRes = await pool.query(
+                "SELECT content FROM document_history where id = $1 AND document_id = $2", 
+                [versionId, documentId]
+            );
+            if (versionRes.rows.length === 0) {
+                throw new Error("Version not found for this document.");
+            }
+
+            const versionContent = versionRes.rows[0].content;
+            await pool.query(
+                "INSERT INTO document_history(document_id, content) VALUES ($1, $2)",
+                [documentId, versionContent]
+            );
+
+            const docRes = await pool.query(
+                "UPDATE documents SET content = $1, last_modified = now() WHERE id = $2 RETURNING id, title, content, last_modified",
+                [versionContent, documentId]
+            );
+            if (docRes.rows.length === 0) throw new Error("Document not found.");
+            
+            const r = docRes.rows[0];
+            return { id: r.id, title: r.title, content: r.content, lastModified: r.last_modified };
+        },
     }
 };
 
