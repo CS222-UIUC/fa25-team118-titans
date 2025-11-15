@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: titans-backend
+  namespace: titans
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: titans-backend
+  template:
+    metadata:
+      labels:
+        app: titans-backend
+    spec:
+      containers:
+        - name: backend
+          image: REPLACE_WITH_BACKEND_IMAGE
+          ports:
+            - containerPort: 4000
+          envFrom:
+            - secretRef:
+                name: titans-backend-secrets
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: titans-backend
+  namespace: titans
+spec:
+  selector:
+    app: titans-backend
+  ports:
+    - port: 4000
+      targetPort: 4000
+  type: ClusterIP

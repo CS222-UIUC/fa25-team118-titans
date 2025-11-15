@@ -1,0 +1,68 @@
+name: Build & Deploy to Kubernetes
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      KUBECONFIG: ${{ secrets.KUBECONFIG }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ env.DOCKER_USERNAME }}/fa25-team118-backend:${{ github.sha }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ env.DOCKER_USERNAME }}/fa25-team118-frontend:${{ github.sha }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Restore kubeconfig
+        run: |
+          echo "$KUBECONFIG" | base64 --decode > $HOME/.kube/config
+
+      - name: Replace image placeholders and apply manifests
+        run: |
+          # replace placeholders in a temp copy of manifests
+          TMPDIR=$(mktemp -d)
+          cp -r k8s $TMPDIR/
+          sed -i "s|REPLACE_WITH_BACKEND_IMAGE|${DOCKER_USERNAME}/fa25-team118-backend:${GITHUB_SHA}|g" $TMPDIR/k8s/backend-deployment.yaml
+          sed -i "s|REPLACE_WITH_FRONTEND_IMAGE|${DOCKER_USERNAME}/fa25-team118-frontend:${GITHUB_SHA}|g" $TMPDIR/k8s/frontend-deployment.yaml
+          kubectl apply -f $TMPDIR/k8s/namespace.yaml
+          kubectl apply -f $TMPDIR/k8s/backend-deployment.yaml
+          kubectl apply -f $TMPDIR/k8s/frontend-deployment.yaml
+
+      - name: Wait for deployments
+        run: |
+          kubectl -n titans rollout status deployment/titans-backend --timeout=120s
+          kubectl -n titans rollout status deployment/titans-frontend --timeout=120s
