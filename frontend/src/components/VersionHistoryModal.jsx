@@ -1,5 +1,5 @@
 import { React } from "react";
-import { useQuery, gql } from "@apollo/client";
+import { useQuery, useMutation, gql } from "@apollo/client";
 import { X } from "lucide-react";
 import "./VersionHistoryModal.css";
 
@@ -10,6 +10,12 @@ const GET_DOCUMENT_VERSIONS = gql`
   }
 `;
 
+const RESTORE_DOCUMENT_VERSION = gql`
+  mutation RestoreDocumentVersion($documentId: ID!, $versionId: ID!) {
+    restoreDocumentVersion(documentId: $documentId, versionId: $versionId) { id content title lastModified }
+  }
+`;
+
 export default function VersionHistoryModal({ documentId, onClose }) {
   
   const { data, loading, error } = useQuery(GET_DOCUMENT_VERSIONS, {
@@ -17,8 +23,22 @@ export default function VersionHistoryModal({ documentId, onClose }) {
     skip: !documentId,
     fetchPolicy: "network-only",
   });
+  const [restoreVersion] = useMutation(RESTORE_DOCUMENT_VERSION);
 
   if (!documentId) return null;
+
+  const handleRestore = async (versionId) => {
+    try {
+      await restoreVersion({
+        variables: { documentId, versionId }
+      });
+      alert("Document restored successfully!");
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to restore version.");
+    }
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -48,6 +68,13 @@ export default function VersionHistoryModal({ documentId, onClose }) {
                         version.content.length > 300 ? version.content.slice(0, 300) + "..." : version.content,
                     }}
                   />
+
+                  <button
+                    className="restore-btn"
+                    onClick={() => handleRestore(version.id)}
+                  >
+                    Restore This Version
+                  </button>
                 </div>
               ))
             ) : (

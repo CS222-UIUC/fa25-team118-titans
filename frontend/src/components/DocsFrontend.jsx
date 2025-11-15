@@ -107,6 +107,11 @@ export default function DocsFrontend() {
    }
  }, [currentDocId, currentDoc]);
 
+ useEffect(() => {
+    if (!currentDocId) return;
+    refetch();
+ }, [showHistory]);
+
 
  const execCommand = (command, value = null) => {
    document.execCommand(command, false, value);
