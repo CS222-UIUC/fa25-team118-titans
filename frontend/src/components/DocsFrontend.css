@@ -484,6 +484,23 @@
   margin: 12px 0;
 }
 
+.editor-content pre.code-block {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.9em;
+  line-height: 1.5;
+  margin: 16px 0;
+  font-family: 'Fira Code', 'Source Code Pro', monospace;
+}
+
+.editor-content pre.code-block code {
+  background: transparent;
+  color: inherit;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
