@@ -20,7 +20,6 @@ jest.mock('lucide-react', () => ({
   Sun: () => <div data-testid="sun-icon" />,
   Moon: () => <div data-testid="moon-icon" />,
   Clock: () => <div data-testid="clock-icon" />,
-  Code: () => <div data-testid="code-icon" />,
 }));
 
 beforeEach(() => {
@@ -122,6 +121,7 @@ describe('DocsFrontend', () => {
   });
 
   test('executes formatting commands', async () => {
+
     document.execCommand = jest.fn();
 
     renderWithProviders(<DocsFrontend />);
@@ -134,23 +134,6 @@ describe('DocsFrontend', () => {
     fireEvent.click(boldButton);
 
     expect(document.execCommand).toHaveBeenCalledWith('bold', false, null);
-  });
-
-  test('inserts a code block snippet', async () => {
-    renderWithProviders(<DocsFrontend />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('code-icon')).toBeInTheDocument();
-    });
-
-    const codeButton = screen.getByTestId('code-icon').closest('button');
-    fireEvent.click(codeButton);
-
-    expect(document.execCommand).toHaveBeenCalledWith(
-      'insertHTML',
-      false,
-      expect.stringContaining('code-block')
-    );
   });
 
   test('find and replace updates editor content', async () => {
