@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock } from 'lucide-react';
 import './DocsFrontend.css';
@@ -12,8 +12,18 @@ export default function DocsFrontend() {
   const [showHistory, setShowHistory] = useState(false);
   const [fontSize, setFontSize] = useState('16');
   const [darkMode, setDarkMode] = useState(false);
+  const [showSearchTools, setShowSearchTools] = useState(false);
+  const [editorSearchTerm, setEditorSearchTerm] = useState('');
+  const [replaceTerm, setReplaceTerm] = useState('');
+  const [matchCount, setMatchCount] = useState(0);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
   const editorRef = useRef(null);
   const saveTimeoutRef = useRef(null);
+  const matchPositionsRef = useRef([]);
+  const trimmedSearchTerm = editorSearchTerm.trim();
+  const normalizedSearchTerm = trimmedSearchTerm.toLowerCase();
+  const hasSearchTerm = normalizedSearchTerm.length > 0;
+  const searchTermLength = trimmedSearchTerm.length;
   const debouncedSave = () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
@@ -201,11 +211,6 @@ export default function DocsFrontend() {
  };
 
 
- const handleInput = () => {
-   debouncedSave();
- };
-
-
   const handleFontSizeChange = (e) => {
     const size = e.target.value;
     setFontSize(size);
@@ -213,6 +218,146 @@ export default function DocsFrontend() {
       editorRef.current.style.fontSize = size + 'px';
     }
   };
+
+  const applyReplacement = (target, replacement) => {
+    const text = target.node.textContent || '';
+    target.node.textContent = `${text.slice(0, target.startOffset)}${replacement}${text.slice(target.startOffset + target.length)}`;
+  };
+
+  const collectMatches = useCallback(() => {
+    if (!editorRef.current || !hasSearchTerm) return [];
+    const walker = document.createTreeWalker(editorRef.current, NodeFilter.SHOW_TEXT, null);
+    const matches = [];
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const text = node.textContent || '';
+      if (!text.trim()) continue;
+      const haystack = text.toLowerCase();
+      let index = 0;
+      while (true) {
+        const found = haystack.indexOf(normalizedSearchTerm, index);
+        if (found === -1) break;
+        matches.push({ node, startOffset: found, length: searchTermLength });
+        index = found + searchTermLength;
+      }
+    }
+
+    return matches;
+  }, [editorRef, hasSearchTerm, normalizedSearchTerm, searchTermLength]);
+
+  const focusMatch = useCallback((index, matchesParam) => {
+    const matches = matchesParam || matchPositionsRef.current;
+    if (!editorRef.current || !matches.length || index < 0 || !matches[index]) return;
+    const match = matches[index];
+    if (!match.node || !match.node.isConnected) return;
+    try {
+      const range = document.createRange();
+      range.setStart(match.node, match.startOffset);
+      range.setEnd(match.node, match.startOffset + match.length);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      editorRef.current.focus();
+      setCurrentMatchIndex(index);
+    } catch (err) {
+      console.warn('Unable to focus match', err);
+    }
+  }, []);
+
+  const refreshMatches = useCallback((options = {}) => {
+    const { keepIndex = false, skipFocus = false } = options;
+    const matches = collectMatches();
+
+    matchPositionsRef.current = matches;
+    setMatchCount(matches.length);
+
+    if (!matches.length) {
+      setCurrentMatchIndex(-1);
+      return matches;
+    }
+
+    const baseIndex = keepIndex
+      ? Math.min(currentMatchIndex === -1 ? 0 : currentMatchIndex, matches.length - 1)
+      : 0;
+
+    if (skipFocus) {
+      if (keepIndex) {
+        setCurrentMatchIndex(baseIndex);
+      } else {
+        setCurrentMatchIndex(-1);
+      }
+      return matches;
+    }
+
+    focusMatch(baseIndex, matches);
+    return matches;
+  }, [collectMatches, currentMatchIndex, focusMatch]);
+
+  useEffect(() => {
+    if (hasSearchTerm) {
+      refreshMatches({ skipFocus: true });
+    } else {
+      matchPositionsRef.current = [];
+      setMatchCount(0);
+      setCurrentMatchIndex(-1);
+    }
+  }, [hasSearchTerm, normalizedSearchTerm, currentDocId, refreshMatches]);
+
+  const stepMatch = (direction) => {
+    if (!hasSearchTerm) return;
+    const matches = matchPositionsRef.current.length ? matchPositionsRef.current : refreshMatches();
+    if (!matches.length) return;
+    const nextIndex = currentMatchIndex === -1
+      ? (direction > 0 ? 0 : matches.length - 1)
+      : (currentMatchIndex + direction + matches.length) % matches.length;
+    focusMatch(nextIndex, matches);
+  };
+
+  const handleFindNext = () => stepMatch(1);
+
+  const handleFindPrevious = () => stepMatch(-1);
+
+  const handleReplaceCurrent = () => {
+    if (!editorRef.current || !hasSearchTerm) return;
+    const matches = matchPositionsRef.current.length ? matchPositionsRef.current : refreshMatches();
+    if (!matches.length) return;
+    const targetIndex = currentMatchIndex === -1 ? 0 : currentMatchIndex;
+    const match = matches[targetIndex];
+    if (!match || !match.node || !match.node.isConnected) {
+      refreshMatches({ keepIndex: true });
+      return;
+    }
+    applyReplacement(match, replaceTerm);
+    const updated = refreshMatches({ keepIndex: true, skipFocus: true });
+    if (updated.length) {
+      const nextIndex = Math.min(targetIndex, updated.length - 1);
+      focusMatch(nextIndex, updated);
+    } else {
+      setCurrentMatchIndex(-1);
+    }
+  };
+
+  const handleReplaceAll = () => {
+    if (!editorRef.current || !hasSearchTerm) return;
+    const matches = matchPositionsRef.current.length
+      ? [...matchPositionsRef.current]
+      : [...refreshMatches({ skipFocus: true })];
+    if (!matches.length) return;
+    matches.reverse().forEach(match => {
+      if (match.node && match.node.isConnected) {
+        applyReplacement(match, replaceTerm);
+      }
+    });
+    refreshMatches({ skipFocus: true });
+  };
+
+ const handleInput = () => {
+   if (hasSearchTerm) {
+     refreshMatches({ keepIndex: true, skipFocus: true });
+   }
+   debouncedSave();
+ };
 
  return (
    <div className={`docs-container ${darkMode ? 'dark-mode' : ''}`}>
@@ -355,8 +500,62 @@ export default function DocsFrontend() {
            <option value="h2">Heading 2</option>
            <option value="h3">Heading 3</option>
          </select>
+
+        <div className="toolbar-divider" />
+
+        <button
+          type="button"
+          onClick={() => setShowSearchTools(prev => !prev)}
+          className={`toolbar-btn ${showSearchTools ? 'active' : ''}`}
+        >
+          Find / Replace
+        </button>
        </div>
      </div>
+
+    {showSearchTools && (
+      <div className="search-panel">
+        <div className="search-row">
+          <div className="search-group">
+            <label htmlFor="doc-search-term">Find</label>
+            <input
+              id="doc-search-term"
+              type="text"
+              value={editorSearchTerm}
+              placeholder="Search within document"
+              onChange={(e) => setEditorSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="search-group">
+            <label htmlFor="doc-replace-term">Replace</label>
+            <input
+              id="doc-replace-term"
+              type="text"
+              value={replaceTerm}
+              placeholder="Replacement text"
+              onChange={(e) => setReplaceTerm(e.target.value)}
+            />
+          </div>
+          <div className="search-actions">
+            <span className="match-count">
+              {matchCount ? `${currentMatchIndex >= 0 ? currentMatchIndex + 1 : 0} / ${matchCount}` : '0 matches'}
+            </span>
+            <button type="button" onClick={handleFindPrevious} disabled={!matchCount}>
+              Prev
+            </button>
+            <button type="button" onClick={handleFindNext} disabled={!matchCount}>
+              Next
+            </button>
+            <button type="button" onClick={handleReplaceCurrent} disabled={!matchCount}>
+              Replace
+            </button>
+            <button type="button" onClick={handleReplaceAll} disabled={!editorSearchTerm.trim()}>
+              Replace All
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
 
      {showDocList && (
@@ -381,7 +580,7 @@ export default function DocsFrontend() {
                    {doc.lastModified.toLocaleString()}
                  </div>
                </button>
-             ))}
+              ))}
            </div>
          </div>
        </div>

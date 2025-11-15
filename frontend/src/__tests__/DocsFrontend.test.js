@@ -135,4 +135,29 @@ describe('DocsFrontend', () => {
 
     expect(document.execCommand).toHaveBeenCalledWith('bold', false, null);
   });
+
+  test('find and replace updates editor content', async () => {
+    renderWithProviders(<DocsFrontend />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Find / Replace')).toBeInTheDocument();
+    });
+
+    const toggleBtn = screen.getByText('Find / Replace');
+    fireEvent.click(toggleBtn);
+
+    const editor = document.querySelector('.editor-content');
+    fireEvent.input(editor, { target: { innerHTML: '<p>Replace me</p>' } });
+
+    const searchInput = screen.getByLabelText('Find');
+    const replaceInput = screen.getByLabelText('Replace');
+
+    fireEvent.change(searchInput, { target: { value: 'Replace' } });
+    fireEvent.change(replaceInput, { target: { value: 'Keep' } });
+
+    const replaceAllButton = screen.getByText('Replace All');
+    fireEvent.click(replaceAllButton);
+
+    expect(editor.textContent).toContain('Keep me');
+  });
 });
