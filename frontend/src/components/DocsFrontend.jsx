@@ -35,30 +35,36 @@ export default function DocsFrontend() {
   const currentDoc = documents.find(d => d.id === currentDocId);
   const GET_DOCUMENTS = gql`
     query GetDocuments {
-      documents { id title content lastModified }
+      documents {
+        id
+        title
+        content
+        lastModified
+      }
     }
   `;
 
- const CREATE_DOCUMENT = gql`
-   mutation CreateDocument($title: String!, $content: String) {
-      };
+  const CREATE_DOCUMENT = gql`
+    mutation CreateDocument($title: String!, $content: String) {
+      createDocument(title: $title, content: $content) {
+        id
+        title
+        content
+        lastModified
+      }
+    }
+  `;
 
-      const insertCodeBlock = () => {
-        if (!editorRef.current) return;
-        editorRef.current.focus();
-        const snippet = '<pre class="code-block"><code>// code snippet</code></pre><p><br/></p>';
-        document.execCommand('insertHTML', false, snippet);
-        debouncedSave();
-     createDocument(title: $title, content: $content) { id title content lastModified }
-   }
- `;
-
-
- const UPDATE_DOCUMENT = gql`
-   mutation UpdateDocument($id: ID!, $title: String, $content: String) {
-     updateDocument(id: $id, title: $title, content: $content) { id title content lastModified }
-   }
- `;
+  const UPDATE_DOCUMENT = gql`
+    mutation UpdateDocument($id: ID!, $title: String, $content: String) {
+      updateDocument(id: $id, title: $title, content: $content) {
+        id
+        title
+        content
+        lastModified
+      }
+    }
+  `;
 
 
  const { data, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });

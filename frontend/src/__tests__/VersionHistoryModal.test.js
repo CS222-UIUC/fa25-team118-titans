@@ -1,7 +1,7 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MockedProvider } from "@apollo/client/testing";
-import { gql } from "@apollo/client";
+import { gql, InMemoryCache } from "@apollo/client";
 import VersionHistoryModal from "../components/VersionHistoryModal";
 
 jest.mock("../components/VersionHistoryModal.css", () => ({}));
@@ -90,10 +90,14 @@ const restoreMocks = [
   },
 ];
 
+beforeAll(() => {
+  window.alert = jest.fn();
+});
+
 describe("VersionHistoryModal", () => {
   test("renders loading and version list", async () => {
     render(
-      <MockedProvider mocks={versionMocks}>
+      <MockedProvider mocks={versionMocks} cache={new InMemoryCache()}>
         <VersionHistoryModal documentId="1" onClose={jest.fn()} />
       </MockedProvider>
     );
@@ -108,7 +112,7 @@ describe("VersionHistoryModal", () => {
 
   test("renders 'No versions found' when list is empty", async () => {
     render(
-      <MockedProvider mocks={emptyVersionMocks}>
+      <MockedProvider mocks={emptyVersionMocks} cache={new InMemoryCache()}>
         <VersionHistoryModal documentId="1" onClose={jest.fn()} />
       </MockedProvider>
     );
@@ -120,7 +124,7 @@ describe("VersionHistoryModal", () => {
 
   test("renders nothing if no documentId provided", () => {
     const { container } = render(
-      <MockedProvider mocks={versionMocks}>
+      <MockedProvider mocks={versionMocks} cache={new InMemoryCache()}>
         <VersionHistoryModal onClose={jest.fn()} />
       </MockedProvider>
     );
@@ -129,34 +133,34 @@ describe("VersionHistoryModal", () => {
   });
 
   test("clicking restore triggers mutation and closes modal", async () => {
-  const mockOnClose = jest.fn();
+    const mockOnClose = jest.fn();
 
-  render(
-    <MockedProvider mocks={restoreMocks}>
-      <VersionHistoryModal documentId="1" onClose={mockOnClose} />
-    </MockedProvider>
-  );
+    render(
+      <MockedProvider mocks={restoreMocks} cache={new InMemoryCache()}>
+        <VersionHistoryModal documentId="1" onClose={mockOnClose} />
+      </MockedProvider>
+    );
 
-  const restoreButtons = await screen.findAllByText("Restore This Version");
-  expect(restoreButtons.length).toBe(2);
+    const restoreButtons = await screen.findAllByText("Restore This Version");
+    expect(restoreButtons.length).toBe(2);
 
-  restoreButtons[0].click();
+    fireEvent.click(restoreButtons[0]);
 
-  await waitFor(() => {
-    expect(mockOnClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+    });
   });
-});
 
-test("restore button appears for every version", async () => {
-  render(
-    <MockedProvider mocks={versionMocks}>
-      <VersionHistoryModal documentId="1" onClose={jest.fn()} />
-    </MockedProvider>
-  );
+  test("restore button appears for every version", async () => {
+    render(
+      <MockedProvider mocks={versionMocks} cache={new InMemoryCache()}>
+        <VersionHistoryModal documentId="1" onClose={jest.fn()} />
+      </MockedProvider>
+    );
 
-  await waitFor(() => {
-    const restoreButtons = screen.getAllByText("Restore This Version");
-    expect(restoreButtons.length).toBe(2); // v1 + v2
+    await waitFor(() => {
+      const restoreButtons = screen.getAllByText("Restore This Version");
+      expect(restoreButtons.length).toBe(2); // v1 + v2
+    });
   });
-});
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
-import { gql } from '@apollo/client';
+import { gql, InMemoryCache } from '@apollo/client';
 import DocsFrontend from '../components/DocsFrontend';
 
 jest.mock('../components/DocsFrontend.css', () => ({}));
@@ -59,7 +59,7 @@ const mocks = [
 
 const renderWithProviders = (component) => {
   return render(
-    <MockedProvider mocks={mocks}>
+    <MockedProvider mocks={mocks} cache={new InMemoryCache()}>
       {component}
     </MockedProvider>
   );
