@@ -30,13 +30,6 @@ export default function DocsFrontend() {
   const normalizedSearchTerm = trimmedSearchTerm.toLowerCase();
   const hasSearchTerm = normalizedSearchTerm.length > 0;
   const searchTermLength = trimmedSearchTerm.length;
-  const debouncedSave = () => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(() => {
-      handleSave();
-    }, 1000);
-  };
-
   const extractPlainText = useCallback((html) => {
     if (typeof document === 'undefined') {
       return html ? html.replace(/<[^>]+>/g, ' ') : '';
@@ -104,6 +97,67 @@ export default function DocsFrontend() {
  const [updateDoc] = useMutation(UPDATE_DOCUMENT);
 
 
+  const execCommand = useCallback((command, value = null) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
+  }, []);
+
+
+  const createDocumentApollo = useCallback(async (title, content) => {
+    const res = await createDoc({ variables: { title, content } });
+    const d = res.data.createDocument;
+    return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
+  }, [createDoc]);
+
+
+  const updateDocumentApollo = useCallback(async (id, title, content) => {
+    const res = await updateDoc({ variables: { id, title, content } });
+    const d = res.data.updateDocument;
+    return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
+  }, [updateDoc]);
+
+
+   const handleSave = useCallback(async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    if (!editorRef.current) return;
+    const html = editorRef.current.innerHTML;
+    try {
+       const localDoc = currentDoc;
+      if (!localDoc) {
+         const created = await createDocumentApollo('Untitled Doc', html);
+         if (created) {
+           setDocuments(prev => [...prev, created]);
+           setCurrentDocId(created.id);
+           setLastSavedAt(created.lastModified);
+           updateStatsFromHtml(created.content || '');
+           refetch();
+         }
+      } else {
+        const updated = await updateDocumentApollo(currentDocId, localDoc.title, html);
+        if (updated) {
+           setDocuments(prev => prev.map(d => d.id === currentDocId ? { ...d, lastModified: updated.lastModified } : d));
+          setLastSavedAt(updated.lastModified);
+          refetch();
+        }
+      }
+    } catch (err) {
+      console.error('Save failed', err);
+    } finally {
+    }
+   }, [createDocumentApollo, currentDoc, currentDocId, refetch, updateDocumentApollo, updateStatsFromHtml]);
+
+
+  const debouncedSave = useCallback(() => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      handleSave();
+    }, 1000);
+  }, [handleSave]);
+
+
  useEffect(() => {
    if (data && data.documents) {
      const docs = data.documents.map(d => ({ id: d.id, title: d.title, content: d.content || '<p></p>', lastModified: d.lastModified ? new Date(d.lastModified) : new Date() }));
@@ -164,7 +218,7 @@ export default function DocsFrontend() {
   };
   document.addEventListener('keydown', handleKeyDown);
   return () => document.removeEventListener('keydown', handleKeyDown);
-}, [currentDocId]);
+}, [currentDocId, execCommand, handleSave]);
 
 
  // keep editor HTML in sync when doc changes
@@ -174,67 +228,14 @@ export default function DocsFrontend() {
    }
  }, [currentDocId, currentDoc]);
 
- useEffect(() => {
-    if (!currentDocId) return;
-    refetch();
- }, [showHistory]);
-
-
- const execCommand = (command, value = null) => {
-   document.execCommand(command, false, value);
-   editorRef.current?.focus();
- };
-
-
- const createDocumentApollo = async (title, content) => {
-   const res = await createDoc({ variables: { title, content } });
-   const d = res.data.createDocument;
-   return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
- };
-
-
- const updateDocumentApollo = async (id, title, content) => {
-   const res = await updateDoc({ variables: { id, title, content } });
-   const d = res.data.updateDocument;
-   return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
- };
-
-
- const handleSave = async () => {
-   if (saveTimeoutRef.current) {
-     clearTimeout(saveTimeoutRef.current);
-     saveTimeoutRef.current = null;
-   }
-   if (!editorRef.current) return;
-   const html = editorRef.current.innerHTML;
-   try {
-     const localDoc = documents.find(d => String(d.id) === String(currentDocId));
-     if (!localDoc) {
-
-
-       const created = await createDocumentApollo('Untitled Doc', html);
-       if (created) {
-         setDocuments(docs => [...docs, created]);
-         setCurrentDocId(created.id);
-         setLastSavedAt(created.lastModified);
-         updateStatsFromHtml(created.content || '');
-
-
-         refetch();
-       }
-     } else {
-       const updated = await updateDocumentApollo(currentDocId, localDoc.title, html);
-       if (updated) {
-         setDocuments(docs => docs.map(d => d.id === currentDocId ? { ...d, lastModified: updated.lastModified } : d));
-         setLastSavedAt(updated.lastModified);
-         refetch();
-       }
-     }
-   } catch (err) {
-     console.error('Save failed', err);
-   } finally {
-   }
- };
+useEffect(() => {
+  if (!showHistory) return;
+  return () => {
+    if (currentDocId) {
+      refetch();
+    }
+  };
+}, [currentDocId, refetch, showHistory]);
 
 
  const handleTitleChange = (e) => {

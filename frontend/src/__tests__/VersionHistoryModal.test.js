@@ -1,8 +1,9 @@
 import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MockedProvider } from "@apollo/client/testing";
-import { gql, InMemoryCache } from "@apollo/client";
+import { gql } from "@apollo/client";
 import VersionHistoryModal from "../components/VersionHistoryModal";
+import { createPatchedCache } from "../testUtils/createPatchedCache";
 
 jest.mock("../components/VersionHistoryModal.css", () => ({}));
 jest.mock("lucide-react", () => ({
@@ -97,7 +98,7 @@ beforeAll(() => {
 describe("VersionHistoryModal", () => {
   test("renders loading and version list", async () => {
     render(
-      <MockedProvider mocks={versionMocks} cache={new InMemoryCache()}>
+      <MockedProvider mocks={versionMocks} cache={createPatchedCache()}>
         <VersionHistoryModal documentId="1" onClose={jest.fn()} />
       </MockedProvider>
     );
@@ -112,7 +113,7 @@ describe("VersionHistoryModal", () => {
 
   test("renders 'No versions found' when list is empty", async () => {
     render(
-      <MockedProvider mocks={emptyVersionMocks} cache={new InMemoryCache()}>
+      <MockedProvider mocks={emptyVersionMocks} cache={createPatchedCache()}>
         <VersionHistoryModal documentId="1" onClose={jest.fn()} />
       </MockedProvider>
     );
@@ -124,7 +125,7 @@ describe("VersionHistoryModal", () => {
 
   test("renders nothing if no documentId provided", () => {
     const { container } = render(
-      <MockedProvider mocks={versionMocks} cache={new InMemoryCache()}>
+      <MockedProvider mocks={versionMocks} cache={createPatchedCache()}>
         <VersionHistoryModal onClose={jest.fn()} />
       </MockedProvider>
     );
@@ -136,7 +137,7 @@ describe("VersionHistoryModal", () => {
     const mockOnClose = jest.fn();
 
     render(
-      <MockedProvider mocks={restoreMocks} cache={new InMemoryCache()}>
+      <MockedProvider mocks={restoreMocks} cache={createPatchedCache()}>
         <VersionHistoryModal documentId="1" onClose={mockOnClose} />
       </MockedProvider>
     );
@@ -153,7 +154,7 @@ describe("VersionHistoryModal", () => {
 
   test("restore button appears for every version", async () => {
     render(
-      <MockedProvider mocks={versionMocks} cache={new InMemoryCache()}>
+      <MockedProvider mocks={versionMocks} cache={createPatchedCache()}>
         <VersionHistoryModal documentId="1" onClose={jest.fn()} />
       </MockedProvider>
     );
