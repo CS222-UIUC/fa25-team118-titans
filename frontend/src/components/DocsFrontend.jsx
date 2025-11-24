@@ -3,6 +3,7 @@ import { useQuery, useMutation, gql } from '@apollo/client';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock, Code } from 'lucide-react';
 import './DocsFrontend.css';
 import VersionHistoryModal from "./VersionHistoryModal";
+import { DOC_TEMPLATES } from './docTemplates';
 
 
 export default function DocsFrontend() {
@@ -13,6 +14,7 @@ export default function DocsFrontend() {
   const [fontSize, setFontSize] = useState('16');
   const [darkMode, setDarkMode] = useState(false);
   const [showSearchTools, setShowSearchTools] = useState(false);
+  const [templateSelection, setTemplateSelection] = useState('');
   const [editorSearchTerm, setEditorSearchTerm] = useState('');
   const [replaceTerm, setReplaceTerm] = useState('');
   const [matchCount, setMatchCount] = useState(0);
@@ -216,6 +218,32 @@ export default function DocsFrontend() {
      editorRef.current.innerHTML = newDoc.content;
    }
    setShowDocList(false);
+ };
+
+ const createDocumentFromTemplate = async (templateId) => {
+   const template = DOC_TEMPLATES.find((entry) => entry.id === templateId);
+   if (!template) return;
+   try {
+     const created = await createDocumentApollo(template.title, template.content);
+     setDocuments((docs) => [...docs, created]);
+     setCurrentDocId(created.id);
+     if (editorRef.current) {
+       editorRef.current.innerHTML = template.content;
+     }
+     setShowDocList(false);
+     refetch();
+   } catch (err) {
+     console.error('Failed to create document from template', err);
+   } finally {
+     setTemplateSelection('');
+   }
+ };
+
+ const handleTemplateSelection = async (event) => {
+   const templateId = event.target.value;
+   if (!templateId) return;
+   setTemplateSelection(templateId);
+   await createDocumentFromTemplate(templateId);
  };
 
 
@@ -605,6 +633,21 @@ export default function DocsFrontend() {
              <Plus />
              New Document
            </button>
+           <div className="template-picker">
+             <label htmlFor="template-select">Start from template</label>
+             <select
+               id="template-select"
+               value={templateSelection}
+               onChange={handleTemplateSelection}
+             >
+               <option value="">Select template...</option>
+               {DOC_TEMPLATES.map((template) => (
+                 <option key={template.id} value={template.id}>
+                   {template.name}
+                 </option>
+               ))}
+             </select>
+           </div>
            <div className="doc-list">
              {documents.map(doc => (
                <button

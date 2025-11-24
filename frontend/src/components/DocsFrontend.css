@@ -375,6 +375,45 @@
   background-color: #1d4ed8;
 }
 
+.template-picker {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.template-picker label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.dark-mode .template-picker label {
+  color: #d1d5db;
+}
+
+.template-picker select {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  background: #fff;
+  color: #111827;
+}
+
+.template-picker select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.dark-mode .template-picker select {
+  background: #111827;
+  border-color: #404040;
+  color: #f3f4f6;
+}
+
 .doc-list {
   display: flex;
   flex-direction: column;
