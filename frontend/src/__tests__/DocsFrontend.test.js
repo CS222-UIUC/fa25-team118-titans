@@ -194,6 +194,16 @@ describe('DocsFrontend', () => {
     expect(editor.textContent).toContain('Keep me');
   });
 
+  test('shows word and character counts', async () => {
+    renderWithProviders(<DocsFrontend />);
+
+    const wordMetric = await screen.findByTestId('word-count');
+    const charMetric = await screen.findByTestId('char-count');
+
+    expect(wordMetric).toHaveTextContent('Words: 2');
+    expect(charMetric).toHaveTextContent('Characters: 12');
+  });
+
   test('creates a new document from the template picker', async () => {
     const template = DOC_TEMPLATES[0];
     const templateMocks = [

@@ -20,6 +20,9 @@ export default function DocsFrontend() {
   const [replaceTerm, setReplaceTerm] = useState('');
   const [matchCount, setMatchCount] = useState(0);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
+  const [wordCount, setWordCount] = useState(0);
+  const [charCount, setCharCount] = useState(0);
+  const [lastSavedAt, setLastSavedAt] = useState(null);
   const editorRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const matchPositionsRef = useRef([]);
@@ -33,6 +36,32 @@ export default function DocsFrontend() {
       handleSave();
     }, 1000);
   };
+
+  const extractPlainText = useCallback((html) => {
+    if (typeof document === 'undefined') {
+      return html ? html.replace(/<[^>]+>/g, ' ') : '';
+    }
+    const temp = document.createElement('div');
+    temp.innerHTML = html || '';
+    return temp.textContent || '';
+  }, []);
+
+  const updateStatsFromText = useCallback((text = '') => {
+    const normalized = text || '';
+    const trimmed = normalized.trim();
+    const words = trimmed ? trimmed.split(/\s+/).length : 0;
+    setWordCount(words);
+    setCharCount(normalized.length);
+  }, []);
+
+  const updateStatsFromHtml = useCallback((html) => {
+    updateStatsFromText(extractPlainText(html));
+  }, [extractPlainText, updateStatsFromText]);
+
+  const updateStatsFromEditor = useCallback(() => {
+    if (!editorRef.current) return;
+    updateStatsFromText(editorRef.current.innerText || '');
+  }, [updateStatsFromText]);
 
 
   const currentDoc = documents.find(d => d.id === currentDocId);
@@ -82,6 +111,17 @@ export default function DocsFrontend() {
      if (docs.length > 0) setCurrentDocId(docs[0].id);
    }
  }, [data]);
+
+ useEffect(() => {
+   if (currentDoc) {
+     updateStatsFromHtml(currentDoc.content || '');
+     setLastSavedAt(currentDoc.lastModified || null);
+   } else {
+     setWordCount(0);
+     setCharCount(0);
+     setLastSavedAt(null);
+   }
+ }, [currentDoc, updateStatsFromHtml]);
 
  // Keyboard shortcuts handler
  useEffect(() => {
@@ -176,6 +216,8 @@ export default function DocsFrontend() {
        if (created) {
          setDocuments(docs => [...docs, created]);
          setCurrentDocId(created.id);
+         setLastSavedAt(created.lastModified);
+         updateStatsFromHtml(created.content || '');
 
 
          refetch();
@@ -184,6 +226,7 @@ export default function DocsFrontend() {
        const updated = await updateDocumentApollo(currentDocId, localDoc.title, html);
        if (updated) {
          setDocuments(docs => docs.map(d => d.id === currentDocId ? { ...d, lastModified: updated.lastModified } : d));
+         setLastSavedAt(updated.lastModified);
          refetch();
        }
      }
@@ -206,7 +249,8 @@ export default function DocsFrontend() {
 
 
  const createNewDocument = () => {
-   const newId = Math.max(...documents.map(d => d.id)) + 1;
+   const nextIdBase = documents.length ? Math.max(...documents.map(d => Number(d.id))) : 0;
+   const newId = nextIdBase + 1;
    const newDoc = {
      id: newId,
      title: 'Untitled Doc',
@@ -218,6 +262,8 @@ export default function DocsFrontend() {
    if (editorRef.current) {
      editorRef.current.innerHTML = newDoc.content;
    }
+   updateStatsFromHtml(newDoc.content);
+   setLastSavedAt(newDoc.lastModified);
    setShowDocList(false);
  };
 
@@ -251,10 +297,18 @@ export default function DocsFrontend() {
  const switchDocument = async (id) => {
    await handleSave();
    setCurrentDocId(id);
+   const newDoc = documents.find(d => d.id === id);
    if (editorRef.current) {
-     const newDoc = documents.find(d => d.id === id);
      editorRef.current.innerHTML = newDoc ? newDoc.content || '' : '';
    }
+    if (newDoc) {
+      updateStatsFromHtml(newDoc.content || '');
+      setLastSavedAt(newDoc.lastModified || null);
+    } else {
+      setWordCount(0);
+      setCharCount(0);
+      setLastSavedAt(null);
+    }
    setShowDocList(false);
  };
 
@@ -408,10 +462,13 @@ export default function DocsFrontend() {
     debouncedSave();
   };
 
-  const handleInput = () => {
+   const lastSavedLabel = lastSavedAt ? lastSavedAt.toLocaleString() : 'Not saved yet';
+
+   const handleInput = () => {
    if (hasSearchTerm) {
      refreshMatches({ keepIndex: true, skipFocus: true });
    }
+   updateStatsFromEditor();
    debouncedSave();
  };
 
@@ -697,6 +754,13 @@ export default function DocsFrontend() {
          />
        </div>
      </div>
+    <div className="editor-stats-bar">
+      <div className="stats-metrics">
+        <span className="stats-pill" data-testid="word-count">Words: {wordCount}</span>
+        <span className="stats-pill" data-testid="char-count">Characters: {charCount}</span>
+      </div>
+      <div className="stats-saved" data-testid="last-saved">Last saved: {lastSavedLabel}</div>
+    </div>
    </div>
  );
 }
