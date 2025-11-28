@@ -261,7 +261,7 @@ describe('DocsFrontend', () => {
     ];
 
     render(
-      <MockedProvider mocks={templateMocks} cache={new InMemoryCache()}>
+      <MockedProvider mocks={templateMocks} cache={createPatchedCache()}>
         <DocsFrontend />
       </MockedProvider>
     );
