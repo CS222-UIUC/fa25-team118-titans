@@ -1,8 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
-import { gql, InMemoryCache } from '@apollo/client';
+import { gql } from '@apollo/client';
 import DocsFrontend from '../components/DocsFrontend';
+import { createPatchedCache } from '../testUtils/createPatchedCache';
 
 jest.mock('../components/DocsFrontend.css', () => ({}));
 jest.mock('lucide-react', () => ({
@@ -59,7 +60,7 @@ const mocks = [
 
 const renderWithProviders = (component) => {
   return render(
-    <MockedProvider mocks={mocks} cache={new InMemoryCache()}>
+    <MockedProvider mocks={mocks} cache={createPatchedCache()}>
       {component}
     </MockedProvider>
   );

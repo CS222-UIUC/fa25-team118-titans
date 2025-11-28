@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
-import { gql, InMemoryCache } from '@apollo/client';
+import { gql } from '@apollo/client';
 import App from '../App';
+import { createPatchedCache } from '../testUtils/createPatchedCache';
 
 const mocks = [
   {
@@ -35,7 +36,7 @@ const mocks = [
 
 test('renders the app without crashing', () => {
   render(
-    <MockedProvider mocks={mocks} cache={new InMemoryCache()}>
+    <MockedProvider mocks={mocks} cache={createPatchedCache()}>
       <App />
     </MockedProvider>
   );
