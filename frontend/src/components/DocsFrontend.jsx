@@ -32,6 +32,7 @@ export default function DocsFrontend() {
   const normalizedSearchTerm = trimmedSearchTerm.toLowerCase();
   const hasSearchTerm = normalizedSearchTerm.length > 0;
   const searchTermLength = trimmedSearchTerm.length;
+  const [fontColor, setFontColor] = useState('#000000');
 
   const extractPlainText = useCallback((html) => {
     if (typeof document === 'undefined') {
@@ -58,6 +59,13 @@ export default function DocsFrontend() {
     if (!editorRef.current) return;
     updateStatsFromText(editorRef.current.innerText || '');
   }, [updateStatsFromText]);
+
+  const handleFontColorChange = (e) => {
+    const color = e.target.value;
+    setFontColor(color);
+    execCommand('foreColor', color);
+  };
+  
 
 
   const currentDoc = documents.find(d => d.id === currentDocId);
@@ -575,6 +583,15 @@ export default function DocsFrontend() {
            <Underline />
          </button>
 
+         <div className="toolbar-divider" />
+
+        <input
+          type="color"
+          value={fontColor}
+          onChange={handleFontColorChange}
+          title="Font Color"
+          className="toolbar-color-picker"
+        />
 
          <div className="toolbar-divider" />
 

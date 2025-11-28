@@ -8,7 +8,7 @@ cd backend
 npm install
 cd .. && chmod +x ./init_postgres.sh && ./init_postgres.sh && cd backend
 service postgresql start
-node index.js
+node backend/index.js
 ```
 
 # Run Backend Testing

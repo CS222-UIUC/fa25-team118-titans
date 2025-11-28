@@ -615,3 +615,13 @@
   margin-left: auto;
   font-weight: 500;
 }
+
+.toolbar-color-picker {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-left: 8px;
+}
