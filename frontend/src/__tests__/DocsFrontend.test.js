@@ -4,6 +4,7 @@ import { MockedProvider } from '@apollo/client/testing';
 import { gql, InMemoryCache } from '@apollo/client';
 import DocsFrontend from '../components/DocsFrontend';
 import { DOC_TEMPLATES } from '../components/docTemplates';
+import { createPatchedCache } from '../testUtils/createPatchedCache';
 
 jest.mock('../components/DocsFrontend.css', () => ({}));
 
@@ -74,7 +75,7 @@ const mocks = [
 
 const renderWithProviders = (component) => {
   return render(
-    <MockedProvider mocks={mocks} cache={new InMemoryCache()}>
+    <MockedProvider mocks={mocks} cache={createPatchedCache()}>
       {component}
     </MockedProvider>
   );
@@ -194,6 +195,18 @@ describe('DocsFrontend', () => {
     expect(editor.textContent).toContain('Keep me');
   });
 
+  test('shows word and character counts', async () => {
+    renderWithProviders(<DocsFrontend />);
+
+    const wordMetric = await screen.findByTestId('word-count');
+    const charMetric = await screen.findByTestId('char-count');
+
+    await waitFor(() => {
+      expect(wordMetric).toHaveTextContent('Words: 2');
+      expect(charMetric).toHaveTextContent('Characters: 12');
+    });
+  });
+
   test('creates a new document from the template picker', async () => {
     const template = DOC_TEMPLATES[0];
     const templateMocks = [
@@ -248,7 +261,7 @@ describe('DocsFrontend', () => {
     ];
 
     render(
-      <MockedProvider mocks={templateMocks} cache={new InMemoryCache()}>
+      <MockedProvider mocks={templateMocks} cache={createPatchedCache()}>
         <DocsFrontend />
       </MockedProvider>
     );
