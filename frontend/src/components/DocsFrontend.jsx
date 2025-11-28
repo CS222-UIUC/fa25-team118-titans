@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, gql } from '@apollo/client';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useQuery, useMutation, gql } from "@apollo/client";
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock, Code } from 'lucide-react';
-import './DocsFrontend.css';
+import "./DocsFrontend.css";
 import VersionHistoryModal from "./VersionHistoryModal";
-import { DOC_TEMPLATES } from './docTemplates';
+import { DOC_TEMPLATES } from "./docTemplates";
+import DeleteDocumentButton from "./DeleteDocumentButton.jsx";
 
 
 export default function DocsFrontend() {
@@ -633,6 +634,20 @@ export default function DocsFrontend() {
              <Plus />
              New Document
            </button>
+
+           <DeleteDocumentButton
+              documentId={currentDocId}
+              onDeleted={() => {
+                refetch()
+                setCurrentDocId(null);
+                setShowDocList(false);
+                
+                if (editorRef.current) {
+                  editorRef.current.innerHTML = "";
+                }
+              }}
+           />
+
            <div className="template-picker">
              <label htmlFor="template-select">Start from template</label>
              <select
