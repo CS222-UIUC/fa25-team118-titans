@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock, Code } from 'lucide-react';
-import './DocsFrontend.css';
-import VersionHistoryModal from './VersionHistoryModal';
+import "./DocsFrontend.css";
+import VersionHistoryModal from "./DocsVersionHistory.jsx";
 import { DOC_TEMPLATES } from './docTemplates';
 import FindReplacePanel from './FindReplacePanel';
 import EditorStatsBar from './EditorStatsBar';
@@ -713,9 +713,25 @@ export default function DocsFrontend() {
        </div>
       )}
 
-      {showHistory && (
-        <VersionHistoryModal documentId={currentDocId} onClose={() => setShowHistory(false)} />
-      )}
+    {showHistory && (
+      <VersionHistoryModal 
+        documentId={currentDocId} 
+        onClose={() => setShowHistory(false)}
+        onRestore={(content) => {
+          if (editorRef.current) {
+            editorRef.current.innerHTML = content;
+          }
+          setDocuments(docs => 
+            docs.map(d => 
+              d.id === currentDocId 
+                ? { ...d, content } 
+                : d
+            )
+          );
+          handleSave();
+        }}
+      />
+    )}
 
      <div className="editor-container">
        <div className="editor-paper">
