@@ -3,7 +3,7 @@ import { gql, useMutation } from "@apollo/client";
 import { Trash } from "lucide-react";
 import "./DeleteDocumentButton.css";
 
-const DELETE_DOCUMENT = gql`
+export const DELETE_DOCUMENT = gql`
     mutation DeleteDocument($id: ID!) {
         deleteDocument(id: $id)
     }

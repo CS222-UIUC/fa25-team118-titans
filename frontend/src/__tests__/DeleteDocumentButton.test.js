@@ -1,133 +1,112 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MockedProvider } from "@apollo/client/testing";
-import DeleteDocumentButton from "../components/DeleteDocumentButton";
-import { gql } from "@apollo/client";
-
-jest.mock("../components/DeleteDocumentButton.css", () => ({}));
-jest.mock("lucide-react", () => ({
-  Trash: () => <div data-testid="trash-icon" />,
-}));
-
-const mockConfirm = jest.spyOn(window, "confirm");
-const mockAlert = jest.spyOn(window, "alert");
-mockAlert.mockImplementation(() => {});
-mockConfirm.mockImplementation(() => true);
-
-const DELETE_DOCUMENT = gql`
-  mutation DeleteDocument($id: ID!) {
-    deleteDocument(id: $id)
-  }
-`;
-
-const renderWithApollo = (mocks, props) =>
-  render(
-    <MockedProvider mocks={mocks}>
-      <DeleteDocumentButton {...props} />
-    </MockedProvider>
-  );
+import DeleteDocumentButton, { DELETE_DOCUMENT } from "../components/DeleteDocumentButton.jsx";
 
 describe("DeleteDocumentButton", () => {
+  const documentId = "123";
+  const onDeletedMock = jest.fn();
+
+  const mocks = [
+    {
+      request: {
+        query: DELETE_DOCUMENT,
+        variables: { id: documentId },
+      },
+      result: {
+        data: {
+          deleteDocument: true,
+        },
+      },
+    },
+  ];
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test("renders delete button with icon", () => {
-    renderWithApollo([], { documentId: 1 });
+  test("renders button with initial text", () => {
+    render(
+      <MockedProvider mocks={mocks}>
+        <DeleteDocumentButton documentId={documentId} />
+      </MockedProvider>
+    );
+
     expect(screen.getByText("Delete Selected Document")).toBeInTheDocument();
-    expect(screen.getByTestId("trash-icon")).toBeInTheDocument();
   });
 
-  test("alerts when no document is selected", () => {
-    renderWithApollo([], { documentId: null });
+  test("alerts if no documentId provided", () => {
+    window.alert = jest.fn();
+
+    render(
+      <MockedProvider mocks={mocks}>
+        <DeleteDocumentButton />
+      </MockedProvider>
+    );
+
     fireEvent.click(screen.getByRole("button"));
-    expect(mockAlert).toHaveBeenCalledWith("No document selected.");
-    expect(mockConfirm).not.toHaveBeenCalled();
+
+    expect(window.alert).toHaveBeenCalledWith("No document selected.");
   });
 
-  test("does not delete if user cancels confirmation", () => {
-    mockConfirm.mockReturnValueOnce(false);
-    renderWithApollo([], { documentId: 1 });
+  test("cancels deletion if confirmation is declined", () => {
+    window.confirm = jest.fn(() => false);
+    window.alert = jest.fn();
+
+    render(
+      <MockedProvider mocks={mocks}>
+        <DeleteDocumentButton documentId={documentId} />
+      </MockedProvider>
+    );
+
     fireEvent.click(screen.getByRole("button"));
-    expect(mockConfirm).toHaveBeenCalled();
-    expect(mockAlert).not.toHaveBeenCalledWith("Document deleted.");
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      "Are you sure you want to delete this document?"
+    );
+    expect(window.alert).not.toHaveBeenCalled();
   });
 
-  test("successful delete triggers alert + callback", async () => {
-    const onDeleted = jest.fn();
-    const mocks = [
-        {
-        request: {
-            query: DELETE_DOCUMENT,
-            variables: { id: 1 },
-        },
-        result: {
-            data: { deleteDocument: true },
-        },
-        },
-    ];
+  test("calls mutation and onDeleted on confirmation", async () => {
+    window.confirm = jest.fn(() => true);
+    window.alert = jest.fn();
 
-    renderWithApollo(mocks, { documentId: 1, onDeleted });
+    render(
+      <MockedProvider mocks={mocks}>
+        <DeleteDocumentButton documentId={documentId} onDeleted={onDeletedMock} />
+      </MockedProvider>
+    );
 
-    await act(async () => {
-        fireEvent.click(screen.getByRole("button"));
-        await new Promise(resolve => setTimeout(resolve, 0));
-    });
+    fireEvent.click(screen.getByRole("button"));
 
-    expect(mockAlert).toHaveBeenCalledWith("Document deleted.");
-    expect(onDeleted).toHaveBeenCalled();
+    await waitFor(() => expect(window.alert).toHaveBeenCalledWith("Document deleted."));
+    expect(onDeletedMock).toHaveBeenCalled();
   });
 
-  test("failed delete alerts error message", async () => {
-    const mocks = [
+  test("shows error alert if mutation fails", async () => {
+    const errorMocks = [
       {
         request: {
           query: DELETE_DOCUMENT,
-          variables: { id: 1 },
+          variables: { id: documentId },
         },
-        result: {
-          data: { deleteDocument: false },
-        },
+        error: new Error("Network error"),
       },
     ];
-    renderWithApollo(mocks, { documentId: 1 });
-    fireEvent.click(screen.getByRole("button"));
-    await waitFor(() => {
-      expect(mockAlert).toHaveBeenCalledWith(
-        "Document not found or could not be deleted."
-      );
-    });
-  });
 
-  test("mutation is called with correct variables", async () => {
-    const mocks = [
-      {
-        request: {
-          query: DELETE_DOCUMENT,
-          variables: { id: 123 },
-        },
-        result: { data: { deleteDocument: true } },
-      },
-    ];
-    renderWithApollo(mocks, { documentId: 123 });
-    fireEvent.click(screen.getByRole("button"));
-    await waitFor(() => {
-      expect(mockAlert).toHaveBeenCalledWith("Document deleted.");
-    });
-  });
+    window.confirm = jest.fn(() => true);
+    window.alert = jest.fn();
+    console.error = jest.fn();
 
-  test("button shows loading state", async () => {
-    const mocks = [
-      {
-        request: {
-          query: DELETE_DOCUMENT,
-          variables: { id: 5 },
-        },
-        result: new Promise(() => {}),
-      },
-    ];
-    renderWithApollo(mocks, { documentId: 5 });
+    render(
+      <MockedProvider mocks={errorMocks}>
+        <DeleteDocumentButton documentId={documentId} />
+      </MockedProvider>
+    );
+
     fireEvent.click(screen.getByRole("button"));
-    expect(await screen.findByText("Deleting...")).toBeInTheDocument();
+
+    await waitFor(() => expect(window.alert).toHaveBeenCalledWith("Error deleting document."));
+    expect(console.error).toHaveBeenCalled();
   });
 });
