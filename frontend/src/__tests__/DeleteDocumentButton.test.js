@@ -1,7 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MockedProvider } from "@apollo/client/testing";
 import DeleteDocumentButton, { DELETE_DOCUMENT } from "../components/DeleteDocumentButton.jsx";
+import { MockedProvider } from "@apollo/client/testing";
+import { createPatchedCache } from "../testUtils/createPatchedCache";
 
 describe("DeleteDocumentButton", () => {
   const documentId = "123";
@@ -27,7 +28,7 @@ describe("DeleteDocumentButton", () => {
 
   test("renders button with initial text", () => {
     render(
-      <MockedProvider mocks={mocks}>
+      <MockedProvider mocks={mocks} cache={createPatchedCache()}>
         <DeleteDocumentButton documentId={documentId} />
       </MockedProvider>
     );
@@ -39,7 +40,7 @@ describe("DeleteDocumentButton", () => {
     window.alert = jest.fn();
 
     render(
-      <MockedProvider mocks={mocks}>
+      <MockedProvider mocks={mocks} cache={createPatchedCache()}>
         <DeleteDocumentButton />
       </MockedProvider>
     );
@@ -54,7 +55,7 @@ describe("DeleteDocumentButton", () => {
     window.alert = jest.fn();
 
     render(
-      <MockedProvider mocks={mocks}>
+      <MockedProvider mocks={mocks} cache={createPatchedCache()}>
         <DeleteDocumentButton documentId={documentId} />
       </MockedProvider>
     );
@@ -72,7 +73,7 @@ describe("DeleteDocumentButton", () => {
     window.alert = jest.fn();
 
     render(
-      <MockedProvider mocks={mocks}>
+      <MockedProvider mocks={mocks} cache={createPatchedCache()}>
         <DeleteDocumentButton documentId={documentId} onDeleted={onDeletedMock} />
       </MockedProvider>
     );
@@ -99,7 +100,7 @@ describe("DeleteDocumentButton", () => {
     console.error = jest.fn();
 
     render(
-      <MockedProvider mocks={errorMocks}>
+      <MockedProvider mocks={errorMocks} cache={createPatchedCache()}>
         <DeleteDocumentButton documentId={documentId} />
       </MockedProvider>
     );
