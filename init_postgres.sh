@@ -12,14 +12,14 @@ echo "Updating apt and installing PostgreSQL"
 apt update -y
 apt install -y postgresql postgresql-contrib locales
 
-# Fix locale warnings
+
 export LANG="en_US.UTF-8"
 export LANGUAGE="en_US:en"
 export LC_ALL="en_US.UTF-8"
 locale-gen en_US.UTF-8
 update-locale LANG=en_US.UTF-8
 
-# Initialize cluster if missing
+
 CLUSTER_DIR="/var/lib/postgresql/$PG_VERSION/main"
 if [ ! -d "$CLUSTER_DIR" ]; then
     echo "Initializing PostgreSQL cluster at $CLUSTER_DIR"
@@ -27,7 +27,7 @@ if [ ! -d "$CLUSTER_DIR" ]; then
 fi
 
 echo "Starting PostgreSQL cluster"
-# pg_ctlcluster usually works, fallback to pg_ctl
+
 pg_ctlcluster $PG_VERSION main start || \
 runuser -u postgres -- /usr/lib/postgresql/$PG_VERSION/bin/pg_ctl -D "$CLUSTER_DIR" start
 
