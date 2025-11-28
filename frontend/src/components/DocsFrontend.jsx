@@ -4,7 +4,7 @@ import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, File
 import "./DocsFrontend.css";
 import VersionHistoryModal from "./VersionHistoryModal";
 import { DOC_TEMPLATES } from "./docTemplates";
-import DeleteDocumentButton from "./DeleteDocumentButton";
+import DeleteDocumentButton from "./DeleteDocumentButton.jsx";
 
 
 export default function DocsFrontend() {
