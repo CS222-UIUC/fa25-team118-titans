@@ -1,8 +1,14 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
+<<<<<<< HEAD
 import { gql, InMemoryCache } from '@apollo/client';
 import DocsFrontend from '../components/DocsFrontend';
+=======
+import { gql } from '@apollo/client';
+import DocsFrontend from '../components/DocsFrontend';
+import { createPatchedCache } from '../testUtils/createPatchedCache';
+>>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
 
 jest.mock('../components/DocsFrontend.css', () => ({}));
 jest.mock('lucide-react', () => ({
@@ -20,6 +26,10 @@ jest.mock('lucide-react', () => ({
   Moon: () => <div data-testid="moon-icon" />,
   Clock: () => <div data-testid="clock-icon" />,
   Code: () => <div data-testid="code-icon" />,
+<<<<<<< HEAD
+=======
+  Trash: () => <div data-testid="trash-icon" />,
+>>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
 }));
 
 beforeEach(() => {
@@ -58,7 +68,11 @@ const mocks = [
 
 const renderWithProviders = (component) => {
   return render(
+<<<<<<< HEAD
     <MockedProvider mocks={mocks} cache={new InMemoryCache()}>
+=======
+    <MockedProvider mocks={mocks} cache={createPatchedCache()}>
+>>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
       {component}
     </MockedProvider>
   );

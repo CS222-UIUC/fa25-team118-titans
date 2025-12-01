@@ -1,0 +1,17 @@
+.delete-doc-button {
+  width: 100%;
+  background-color: #d81b1b;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  transition: background-color 0.2s;
+}

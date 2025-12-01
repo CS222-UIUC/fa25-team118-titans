@@ -1,10 +1,19 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock, Code } from 'lucide-react';
+<<<<<<< HEAD
 import './DocsFrontend.css';
 import VersionHistoryModal from "./VersionHistoryModal";
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
+=======
+import "./DocsFrontend.css";
+import VersionHistoryModal from "./DocsVersionHistory.jsx";
+import { DOC_TEMPLATES } from './docTemplates';
+import FindReplacePanel from './FindReplacePanel';
+import EditorStatsBar from './EditorStatsBar';
+import DeleteDocumentButton from './DeleteDocumentButton.jsx';
+>>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
 
 
 export default function DocsFrontend() {
@@ -15,10 +24,14 @@ export default function DocsFrontend() {
   const [fontSize, setFontSize] = useState('16');
   const [darkMode, setDarkMode] = useState(false);
   const [showSearchTools, setShowSearchTools] = useState(false);
+  const [templateSelection, setTemplateSelection] = useState('');
   const [editorSearchTerm, setEditorSearchTerm] = useState('');
   const [replaceTerm, setReplaceTerm] = useState('');
   const [matchCount, setMatchCount] = useState(0);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
+  const [wordCount, setWordCount] = useState(0);
+  const [charCount, setCharCount] = useState(0);
+  const [lastSavedAt, setLastSavedAt] = useState(null);
   const editorRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const matchPositionsRef = useRef([]);
@@ -26,12 +39,40 @@ export default function DocsFrontend() {
   const normalizedSearchTerm = trimmedSearchTerm.toLowerCase();
   const hasSearchTerm = normalizedSearchTerm.length > 0;
   const searchTermLength = trimmedSearchTerm.length;
-  const debouncedSave = () => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(() => {
-      handleSave();
-    }, 1000);
+  const [fontColor, setFontColor] = useState('#000000');
+
+  const extractPlainText = useCallback((html) => {
+    if (typeof document === 'undefined') {
+      return html ? html.replace(/<[^>]+>/g, ' ') : '';
+    }
+    const temp = document.createElement('div');
+    temp.innerHTML = html || '';
+    return temp.textContent || '';
+  }, []);
+
+  const updateStatsFromText = useCallback((text = '') => {
+    const normalized = text || '';
+    const trimmed = normalized.trim();
+    const words = trimmed ? trimmed.split(/\s+/).length : 0;
+    setWordCount(words);
+    setCharCount(normalized.length);
+  }, []);
+
+  const updateStatsFromHtml = useCallback((html) => {
+    updateStatsFromText(extractPlainText(html));
+  }, [extractPlainText, updateStatsFromText]);
+
+  const updateStatsFromEditor = useCallback(() => {
+    if (!editorRef.current) return;
+    updateStatsFromText(editorRef.current.innerText || '');
+  }, [updateStatsFromText]);
+
+  const handleFontColorChange = (e) => {
+    const color = e.target.value;
+    setFontColor(color);
+    execCommand('foreColor', color);
   };
+  
 
 
   const currentDoc = documents.find(d => d.id === currentDocId);
@@ -69,70 +110,25 @@ export default function DocsFrontend() {
   `;
 
 
- const { data, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });
- const [createDoc] = useMutation(CREATE_DOCUMENT);
- const [updateDoc] = useMutation(UPDATE_DOCUMENT);
+  const { data, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });
+  const [createDoc] = useMutation(CREATE_DOCUMENT);
+  const [updateDoc] = useMutation(UPDATE_DOCUMENT);
 
 
- useEffect(() => {
-   if (data && data.documents) {
-     const docs = data.documents.map(d => ({ id: d.id, title: d.title, content: d.content || '<p></p>', lastModified: d.lastModified ? new Date(d.lastModified) : new Date() }));
-     setDocuments(docs);
-     if (docs.length > 0) setCurrentDocId(docs[0].id);
-   }
- }, [data]);
-
- // Keyboard shortcuts handler
- useEffect(() => {
-  const handleKeyDown = (e) => {
-    const isMod = e.metaKey || e.ctrlKey;
-    if (!isMod) return;
-    switch(e.key.toLowerCase()) {
-      case 'b':
-        e.preventDefault();
-        execCommand('bold');
-        break;
-      case 'i':
-        e.preventDefault();
-        execCommand('italic');
-        break;
-      case 'u':
-        e.preventDefault();
-        execCommand('underline');
-        break;
-      case 's':
-        e.preventDefault();
-        handleSave();
-        break;
-      case 'z':
-        if (e.shiftKey) {
-          e.preventDefault();
-          execCommand('redo');
-        } else {
-          e.preventDefault();
-          execCommand('undo');
-        }
-        break;
-      case 'y':
-        e.preventDefault();
-        execCommand('redo');
-        break;
-      default:
-        break;
-    }
-  };
-  document.addEventListener('keydown', handleKeyDown);
-  return () => document.removeEventListener('keydown', handleKeyDown);
-}, [currentDocId]);
+  const execCommand = useCallback((command, value = null) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
+  }, []);
 
 
- // keep editor HTML in sync when doc changes
- useEffect(() => {
-   if (editorRef.current && currentDoc && !editorRef.current.contains(document.activeElement)) {
-     editorRef.current.innerHTML = currentDoc.content || '';
-   }
- }, [currentDocId, currentDoc]);
+  const createDocumentApollo = useCallback(async (title, content) => {
+    const res = await createDoc({ variables: { title, content } });
+    const d = res.data.createDocument;
+    return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
+  }, [createDoc]);
 
+
+<<<<<<< HEAD
 useEffect(() => {
   if (!currentDocId || !editorRef.current) return;
 
@@ -186,99 +182,210 @@ useEffect(() => {
     if (!currentDocId) return;
     refetch();
  }, [showHistory]);
+=======
+  const updateDocumentApollo = useCallback(async (id, title, content) => {
+    const res = await updateDoc({ variables: { id, title, content } });
+    const d = res.data.updateDocument;
+    return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
+  }, [updateDoc]);
+>>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
 
 
- const execCommand = (command, value = null) => {
-   document.execCommand(command, false, value);
-   editorRef.current?.focus();
- };
+  const handleSave = useCallback(async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    if (!editorRef.current) return;
+    const html = editorRef.current.innerHTML;
+    try {
+      const localDoc = currentDoc;
+      if (!localDoc) {
+        const created = await createDocumentApollo('Untitled Doc', html);
+        if (created) {
+          setDocuments(prev => [...prev, created]);
+          setCurrentDocId(created.id);
+          setLastSavedAt(created.lastModified);
+          updateStatsFromHtml(created.content || '');
+          refetch();
+        }
+      } else {
+        const updated = await updateDocumentApollo(currentDocId, localDoc.title, html);
+        if (updated) {
+          setDocuments(prev => prev.map(d => d.id === currentDocId ? { ...d, lastModified: updated.lastModified } : d));
+          setLastSavedAt(updated.lastModified);
+          refetch();
+        }
+      }
+    } catch (err) {
+      console.error('Save failed', err);
+    } finally {
+    }
+  }, [createDocumentApollo, currentDoc, currentDocId, refetch, updateDocumentApollo, updateStatsFromHtml]);
 
 
- const createDocumentApollo = async (title, content) => {
-   const res = await createDoc({ variables: { title, content } });
-   const d = res.data.createDocument;
-   return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
- };
+  const debouncedSave = useCallback(() => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      handleSave();
+    }, 1000);
+  }, [handleSave]);
 
 
- const updateDocumentApollo = async (id, title, content) => {
-   const res = await updateDoc({ variables: { id, title, content } });
-   const d = res.data.updateDocument;
-   return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
- };
+  useEffect(() => {
+    if (data && data.documents) {
+      const docs = data.documents.map(d => ({ id: d.id, title: d.title, content: d.content || '<p></p>', lastModified: d.lastModified ? new Date(d.lastModified) : new Date() }));
+      setDocuments(docs);
+      if (docs.length > 0) setCurrentDocId(docs[0].id);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (currentDoc) {
+      updateStatsFromHtml(currentDoc.content || '');
+      setLastSavedAt(currentDoc.lastModified || null);
+    } else {
+      setWordCount(0);
+      setCharCount(0);
+      setLastSavedAt(null);
+    }
+  }, [currentDoc, updateStatsFromHtml]);
+
+ // Keyboard shortcuts handler
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const isMod = e.metaKey || e.ctrlKey;
+      if (!isMod) return;
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          execCommand('bold');
+          break;
+        case 'i':
+          e.preventDefault();
+          execCommand('italic');
+          break;
+        case 'u':
+          e.preventDefault();
+          execCommand('underline');
+          break;
+        case 's':
+          e.preventDefault();
+          handleSave();
+          break;
+        case 'z':
+          if (e.shiftKey) {
+            e.preventDefault();
+            execCommand('redo');
+          } else {
+            e.preventDefault();
+            execCommand('undo');
+          }
+          break;
+        case 'y':
+          e.preventDefault();
+          execCommand('redo');
+          break;
+        default:
+          break;
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [currentDocId, execCommand, handleSave]);
 
 
- const handleSave = async () => {
-   if (saveTimeoutRef.current) {
-     clearTimeout(saveTimeoutRef.current);
-     saveTimeoutRef.current = null;
-   }
-   if (!editorRef.current) return;
-   const html = editorRef.current.innerHTML;
+ // keep editor HTML in sync when doc changes
+  useEffect(() => {
+    if (editorRef.current && currentDoc && !editorRef.current.contains(document.activeElement)) {
+      editorRef.current.innerHTML = currentDoc.content || '';
+    }
+  }, [currentDocId, currentDoc]);
+
+  useEffect(() => {
+    if (!showHistory) return;
+    return () => {
+      if (currentDocId) {
+        refetch();
+      }
+    };
+  }, [currentDocId, refetch, showHistory]);
+
+
+  const handleTitleChange = (e) => {
+    setDocuments(docs =>
+      docs.map(d =>
+        d.id === currentDocId
+          ? { ...d, title: e.target.value }
+          : d
+      )
+    );
+  };
+
+
+  const createNewDocument = () => {
+    const nextIdBase = documents.length ? Math.max(...documents.map(d => Number(d.id))) : 0;
+    const newId = nextIdBase + 1;
+    const newDoc = {
+      id: newId,
+      title: 'Untitled Doc',
+      content: '<p>text</p>',
+      lastModified: new Date()
+    };
+    setDocuments([...documents, newDoc]);
+    setCurrentDocId(newId);
+    if (editorRef.current) {
+      editorRef.current.innerHTML = newDoc.content;
+    }
+    updateStatsFromHtml(newDoc.content);
+    setLastSavedAt(newDoc.lastModified);
+    setShowDocList(false);
+  };
+
+  const createDocumentFromTemplate = async (templateId) => {
+   const template = DOC_TEMPLATES.find((entry) => entry.id === templateId);
+   if (!template) return;
    try {
-     const localDoc = documents.find(d => String(d.id) === String(currentDocId));
-     if (!localDoc) {
-
-
-       const created = await createDocumentApollo('Untitled Doc', html);
-       if (created) {
-         setDocuments(docs => [...docs, created]);
-         setCurrentDocId(created.id);
-
-
-         refetch();
-       }
-     } else {
-       const updated = await updateDocumentApollo(currentDocId, localDoc.title, html);
-       if (updated) {
-         setDocuments(docs => docs.map(d => d.id === currentDocId ? { ...d, lastModified: updated.lastModified } : d));
-         refetch();
-       }
+     const created = await createDocumentApollo(template.title, template.content);
+     setDocuments((docs) => [...docs, created]);
+     setCurrentDocId(created.id);
+     if (editorRef.current) {
+       editorRef.current.innerHTML = template.content;
      }
+     setShowDocList(false);
+     refetch();
    } catch (err) {
-     console.error('Save failed', err);
+     console.error('Failed to create document from template', err);
    } finally {
+     setTemplateSelection('');
    }
  };
 
-
- const handleTitleChange = (e) => {
-   setDocuments(docs =>
-     docs.map(d =>
-       d.id === currentDocId
-         ? { ...d, title: e.target.value }
-         : d
-     )
-   );
- };
+  const handleTemplateSelection = async (event) => {
+    const templateId = event.target.value;
+    if (!templateId) return;
+    setTemplateSelection(templateId);
+    await createDocumentFromTemplate(templateId);
+  };
 
 
- const createNewDocument = () => {
-   const newId = Math.max(...documents.map(d => d.id)) + 1;
-   const newDoc = {
-     id: newId,
-     title: 'Untitled Doc',
-     content: '<p>text</p>',
-     lastModified: new Date()
-   };
-   setDocuments([...documents, newDoc]);
-   setCurrentDocId(newId);
-   if (editorRef.current) {
-     editorRef.current.innerHTML = newDoc.content;
-   }
-   setShowDocList(false);
- };
-
-
- const switchDocument = async (id) => {
-   await handleSave();
-   setCurrentDocId(id);
-   if (editorRef.current) {
-     const newDoc = documents.find(d => d.id === id);
-     editorRef.current.innerHTML = newDoc ? newDoc.content || '' : '';
-   }
-   setShowDocList(false);
- };
+  const switchDocument = async (id) => {
+    await handleSave();
+    setCurrentDocId(id);
+    const newDoc = documents.find(d => d.id === id);
+    if (editorRef.current) {
+      editorRef.current.innerHTML = newDoc ? newDoc.content || '' : '';
+    }
+    if (newDoc) {
+      updateStatsFromHtml(newDoc.content || '');
+      setLastSavedAt(newDoc.lastModified || null);
+    } else {
+      setWordCount(0);
+      setCharCount(0);
+      setLastSavedAt(null);
+    }
+    setShowDocList(false);
+  };
 
 
   const handleFontSizeChange = (e) => {
@@ -431,11 +538,12 @@ useEffect(() => {
   };
 
   const handleInput = () => {
-   if (hasSearchTerm) {
-     refreshMatches({ keepIndex: true, skipFocus: true });
-   }
-   debouncedSave();
- };
+    if (hasSearchTerm) {
+      refreshMatches({ keepIndex: true, skipFocus: true });
+    }
+    updateStatsFromEditor();
+    debouncedSave();
+  };
 
  return (
    <div className={`docs-container ${darkMode ? 'dark-mode' : ''}`}>
@@ -538,6 +646,15 @@ useEffect(() => {
            <Underline />
          </button>
 
+         <div className="toolbar-divider" />
+
+        <input
+          type="color"
+          value={fontColor}
+          onChange={handleFontColorChange}
+          title="Font Color"
+          className="toolbar-color-picker"
+        />
 
          <div className="toolbar-divider" />
 
@@ -602,47 +719,18 @@ useEffect(() => {
      </div>
 
     {showSearchTools && (
-      <div className="search-panel">
-        <div className="search-row">
-          <div className="search-group">
-            <label htmlFor="doc-search-term">Find</label>
-            <input
-              id="doc-search-term"
-              type="text"
-              value={editorSearchTerm}
-              placeholder="Search within document"
-              onChange={(e) => setEditorSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="search-group">
-            <label htmlFor="doc-replace-term">Replace</label>
-            <input
-              id="doc-replace-term"
-              type="text"
-              value={replaceTerm}
-              placeholder="Replacement text"
-              onChange={(e) => setReplaceTerm(e.target.value)}
-            />
-          </div>
-          <div className="search-actions">
-            <span className="match-count">
-              {matchCount ? `${currentMatchIndex >= 0 ? currentMatchIndex + 1 : 0} / ${matchCount}` : '0 matches'}
-            </span>
-            <button type="button" onClick={handleFindPrevious} disabled={!matchCount}>
-              Prev
-            </button>
-            <button type="button" onClick={handleFindNext} disabled={!matchCount}>
-              Next
-            </button>
-            <button type="button" onClick={handleReplaceCurrent} disabled={!matchCount}>
-              Replace
-            </button>
-            <button type="button" onClick={handleReplaceAll} disabled={!editorSearchTerm.trim()}>
-              Replace All
-            </button>
-          </div>
-        </div>
-      </div>
+      <FindReplacePanel
+        editorSearchTerm={editorSearchTerm}
+        onSearchTermChange={setEditorSearchTerm}
+        replaceTerm={replaceTerm}
+        onReplaceTermChange={setReplaceTerm}
+        matchCount={matchCount}
+        currentMatchIndex={currentMatchIndex}
+        onFindPrevious={handleFindPrevious}
+        onFindNext={handleFindNext}
+        onReplaceCurrent={handleReplaceCurrent}
+        onReplaceAll={handleReplaceAll}
+      />
     )}
 
 
@@ -656,6 +744,37 @@ useEffect(() => {
              <Plus />
              New Document
            </button>
+
+           <DeleteDocumentButton
+             documentId={currentDocId}
+             onDeleted={() => {
+               refetch();
+               setCurrentDocId(null);
+               setShowDocList(false);
+               setWordCount(0);
+               setCharCount(0);
+               setLastSavedAt(null);
+               if (editorRef.current) {
+                 editorRef.current.innerHTML = '';
+               }
+             }}
+           />
+
+           <div className="template-picker">
+             <label htmlFor="template-select">Start from template</label>
+             <select
+               id="template-select"
+               value={templateSelection}
+               onChange={handleTemplateSelection}
+             >
+               <option value="">Select template...</option>
+               {DOC_TEMPLATES.map((template) => (
+                 <option key={template.id} value={template.id}>
+                   {template.name}
+                 </option>
+               ))}
+             </select>
+           </div>
            <div className="doc-list">
              {documents.map(doc => (
                <button
@@ -674,9 +793,25 @@ useEffect(() => {
        </div>
       )}
 
-      {showHistory && (
-        <VersionHistoryModal documentId={currentDocId} onClose={() => setShowHistory(false)} />
-      )}
+    {showHistory && (
+      <VersionHistoryModal 
+        documentId={currentDocId} 
+        onClose={() => setShowHistory(false)}
+        onRestore={(content) => {
+          if (editorRef.current) {
+            editorRef.current.innerHTML = content;
+          }
+          setDocuments(docs => 
+            docs.map(d => 
+              d.id === currentDocId 
+                ? { ...d, content } 
+                : d
+            )
+          );
+          handleSave();
+        }}
+      />
+    )}
 
      <div className="editor-container">
        <div className="editor-paper">
@@ -690,6 +825,11 @@ useEffect(() => {
          />
        </div>
      </div>
+    <EditorStatsBar
+      wordCount={wordCount}
+      charCount={charCount}
+      lastSavedAt={lastSavedAt}
+    />
    </div>
  );
 }

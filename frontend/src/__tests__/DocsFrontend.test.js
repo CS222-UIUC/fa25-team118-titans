@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import { gql, InMemoryCache } from '@apollo/client';
 import DocsFrontend from '../components/DocsFrontend';
+import { DOC_TEMPLATES } from '../components/docTemplates';
+import { createPatchedCache } from '../testUtils/createPatchedCache';
 
 jest.mock('../components/DocsFrontend.css', () => ({}));
 
@@ -21,25 +23,39 @@ jest.mock('lucide-react', () => ({
   Moon: () => <div data-testid="moon-icon" />,
   Clock: () => <div data-testid="clock-icon" />,
   Code: () => <div data-testid="code-icon" />,
+  Trash: () => <div data-testid="trash-icon" />,
 }));
 
 beforeEach(() => {
   document.execCommand = jest.fn();
 });
 
+const GET_DOCUMENTS = gql`
+  query GetDocuments {
+    documents {
+      id
+      title
+      content
+      lastModified
+    }
+  }
+`;
+
+const CREATE_DOCUMENT = gql`
+  mutation CreateDocument($title: String!, $content: String) {
+    createDocument(title: $title, content: $content) {
+      id
+      title
+      content
+      lastModified
+    }
+  }
+`;
+
 const mocks = [
   {
     request: {
-      query: gql`
-        query GetDocuments {
-          documents {
-            id
-            title
-            content
-            lastModified
-          }
-        }
-      `,
+      query: GET_DOCUMENTS,
     },
     result: {
       data: {
@@ -59,7 +75,7 @@ const mocks = [
 
 const renderWithProviders = (component) => {
   return render(
-    <MockedProvider mocks={mocks} cache={new InMemoryCache()}>
+    <MockedProvider mocks={mocks} cache={createPatchedCache()}>
       {component}
     </MockedProvider>
   );
@@ -177,5 +193,90 @@ describe('DocsFrontend', () => {
     fireEvent.click(replaceAllButton);
 
     expect(editor.textContent).toContain('Keep me');
+  });
+
+  test('shows word and character counts', async () => {
+    renderWithProviders(<DocsFrontend />);
+
+    const wordMetric = await screen.findByTestId('word-count');
+    const charMetric = await screen.findByTestId('char-count');
+
+    await waitFor(() => {
+      expect(wordMetric).toHaveTextContent('Words: 2');
+      expect(charMetric).toHaveTextContent('Characters: 12');
+    });
+  });
+
+  test('creates a new document from the template picker', async () => {
+    const template = DOC_TEMPLATES[0];
+    const templateMocks = [
+      {
+        request: {
+          query: GET_DOCUMENTS,
+        },
+        result: {
+          data: {
+            documents: [],
+          },
+        },
+      },
+      {
+        request: {
+          query: CREATE_DOCUMENT,
+          variables: {
+            title: template.title,
+            content: template.content,
+          },
+        },
+        result: {
+          data: {
+            createDocument: {
+              __typename: 'Document',
+              id: '99',
+              title: template.title,
+              content: template.content,
+              lastModified: '2023-11-15T00:00:00Z',
+            },
+          },
+        },
+      },
+      {
+        request: {
+          query: GET_DOCUMENTS,
+        },
+        result: {
+          data: {
+            documents: [
+              {
+                __typename: 'Document',
+                id: '99',
+                title: template.title,
+                content: template.content,
+                lastModified: '2023-11-15T00:00:00Z',
+              },
+            ],
+          },
+        },
+      },
+    ];
+
+    render(
+      <MockedProvider mocks={templateMocks} cache={createPatchedCache()}>
+        <DocsFrontend />
+      </MockedProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('menu-icon')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('menu-icon').closest('button'));
+
+    const templateSelect = await screen.findByLabelText(/Start from template/i);
+    fireEvent.change(templateSelect, { target: { value: template.id } });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue(template.title)).toBeInTheDocument();
+    });
   });
 });

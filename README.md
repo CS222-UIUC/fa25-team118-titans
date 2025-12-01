@@ -8,7 +8,7 @@ cd backend
 npm install
 cd .. && chmod +x ./init_postgres.sh && ./init_postgres.sh && cd backend
 service postgresql start
-node index.js
+node backend/index.js
 ```
 
 # Run Backend Testing
@@ -139,6 +139,7 @@ Notes:
 gh secret set DOCKER_USERNAME --body "${DOCKER_USERNAME}"
 gh secret set DOCKER_PASSWORD --body "${DOCKER_PASSWORD}"
 base64 -w0 $HOME/.kube/config | gh secret set KUBECONFIG --body -
+<<<<<<< HEAD
 ```
  
 ## Collaborative editing (Yjs)
@@ -171,3 +172,6 @@ npm start
 
 Notes and next steps:
 - The current client writes the full editor `innerHTML` into Y.Text on each input. This is a pragmatic starting point but not optimal for cursor preservation or efficient edits. 
+=======
+```
+>>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
