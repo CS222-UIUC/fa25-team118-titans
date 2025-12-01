@@ -9,7 +9,6 @@ import FindReplacePanel from "./FindReplacePanel";
 import EditorStatsBar from "./EditorStatsBar";
 import DeleteDocumentButton from "./DeleteDocumentButton.jsx";
 import CommentSidebar from "./CommentSidebar.jsx";
-import { renderInlineComments, stripInlineCommentSpans } from "../utils/renderInlineComments.js";
 
 
 export default function DocsFrontend() {
@@ -245,15 +244,11 @@ export default function DocsFrontend() {
 
 
  // keep editor HTML in sync when doc changes
- useEffect(() => {
-  if (!editorRef.current || !currentDoc) return;
-
-  // Only update when user is NOT typing
-  if (!editorRef.current.contains(document.activeElement)) {
-    const cleanHTML = stripInlineCommentSpans(currentDoc.content || "");
-    editorRef.current.innerHTML = renderInlineComments(cleanHTML, comments);
+  useEffect(() => {
+  if (editorRef.current && currentDoc && !editorRef.current.contains(document.activeElement)) {
+    editorRef.current.innerHTML = currentDoc.content || '';
   }
-}, [currentDocId, currentDoc, comments]);
+}, [currentDocId, currentDoc]);
 
   useEffect(() => {
     if (!showHistory) return;
