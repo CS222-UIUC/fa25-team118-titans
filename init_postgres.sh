@@ -8,25 +8,32 @@ DB_USER="myuser"
 DB_PASS="mypassword"
 PG_VERSION="15"
 
-
 echo "Updating apt and installing PostgreSQL"
 apt update -y
 apt install -y postgresql postgresql-contrib locales
 
-# echo "Setting locale to en_US.UTF-8"
-# locale-gen en_US.UTF-8
-# update-locale LANG=en_US.UTF-8
 
-# THEY ARE MESSING THINGS UP!
+export LANG="en_US.UTF-8"
+export LANGUAGE="en_US:en"
+export LC_ALL="en_US.UTF-8"
+locale-gen en_US.UTF-8
+update-locale LANG=en_US.UTF-8
+
+
+CLUSTER_DIR="/var/lib/postgresql/$PG_VERSION/main"
+if [ ! -d "$CLUSTER_DIR" ]; then
+    echo "Initializing PostgreSQL cluster at $CLUSTER_DIR"
+    runuser -u postgres -- /usr/lib/postgresql/$PG_VERSION/bin/initdb -D "$CLUSTER_DIR"
+fi
 
 echo "Starting PostgreSQL cluster"
+
 pg_ctlcluster $PG_VERSION main start || \
-su - postgres -c "/usr/lib/postgresql/$PG_VERSION/bin/pg_ctl -D /var/lib/postgresql/$PG_VERSION/main start"
+runuser -u postgres -- /usr/lib/postgresql/$PG_VERSION/bin/pg_ctl -D "$CLUSTER_DIR" start
 
 sleep 3
 
 echo "Creating database and user (if not exists)"
-
 DB_EXISTS=$(runuser -u postgres -- psql -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'")
 if [ "$DB_EXISTS" != "1" ]; then
   echo "Creating database: $DB_NAME"
