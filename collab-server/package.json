@@ -1,0 +1,13 @@
+{
+  "name": "collab-server",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "ws": "^8.13.0",
+    "y-websocket": "^1.4.6",
+    "yjs": "^13.7.43"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}

@@ -13,6 +13,9 @@
     "react-dom": "^19.2.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
+    ,
+    "yjs": "^13.7.43",
+    "y-websocket": "^1.4.6"
   },
   "scripts": {
     "start": "react-scripts start",
