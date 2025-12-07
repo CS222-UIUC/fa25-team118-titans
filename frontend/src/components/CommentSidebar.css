@@ -1,0 +1,37 @@
+.comment-sidebar {
+  width: 260px;
+  border-left: 1px solid #ddd;
+  padding: 12px;
+  background: #fafafa;
+  overflow-y: auto;
+}
+
+.comment-card {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.comment-card:hover {
+  background: #f0f0f0;
+}
+
+.comment-text {
+  margin-bottom: 8px;
+}
+
+.delete-comment {
+  background: transparent;
+  color: #c00;
+  border: none;
+  cursor: pointer;
+}
+
+.empty-comments {
+  margin-top: 20px;
+  color: #777;
+}
