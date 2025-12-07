@@ -625,3 +625,43 @@
   vertical-align: middle;
   margin-left: 8px;
 }
+
+.comment-highlight {
+  background: #fff3a3;
+  border-bottom: 1px solid #e0c200;
+  cursor: pointer;
+}
+
+.add-comment-floating {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  right: 300px;
+  top: 100px;
+  z-index: 10000;
+}
+
+.editor-and-comments {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  width: 100%;
+  overflow: hidden;
+}
+
+.comment-sidebar {
+  width: 260px;
+  border-left: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 16px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.dark-mode .comment-sidebar {
+  background: #2a2a2a;
+  border-left-color: #404040;
+}
