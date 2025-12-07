@@ -17,21 +17,10 @@ const typeDefs = gql`
         savedAt: DateTime!
     }
 
-    type Comment {
-        id: ID!
-        documentId: ID!
-        content: String!
-        startOffset: Int!
-        endOffset: Int!
-        createdAt: DateTime
-        updatedAt: DateTime
-    }
-
     type Query {
         documents: [Document!]!
         document(id: ID!): Document
         documentVersions(documentId: ID!): [Version!]!
-        documentComments(documentId: ID!): [Comment!]!
     }
 
     type Mutation {
@@ -39,8 +28,6 @@ const typeDefs = gql`
         updateDocument(id: ID!, title: String, content: String): Document!
         deleteDocument(id: ID!): Boolean!
         restoreDocumentVersion(documentId: ID!, versionId: ID!): Document!
-        addComment(documentId: ID!, content: String!, startOffset: Int!, endOffset: Int!): Comment!
-        deleteComment(id: ID!): Boolean!
     }
 `;
 
@@ -56,27 +43,9 @@ const resolvers = {
             if (!r) return null;
             return { id: r.id, title: r.title, content: r.content, lastModified: r.last_modified };
         },
-        documentVersions: async (_, { documentId }) => {
+        documentVersions: async(_, { documentId }) => {
             const res = await pool.query("SELECT id, content, saved_at FROM document_history WHERE document_id = $1 ORDER BY saved_at DESC", [documentId]);
             return res.rows.map(r => ({ id: r.id, content: r.content, savedAt: r.saved_at }));
-        },
-        documentComments: async (_, { documentId }) => {
-            const res = await pool.query(
-                `SELECT id, document_id, content, start_offset, end_offset, created_at, updated_at
-                 FROM comments
-                 WHERE document_id = $1
-                 ORDER BY created_at ASC`,
-                [documentId]
-            );
-            return res.rows.map(r => ({
-                id: r.id,
-                documentId: r.document_id,
-                content: r.content,
-                startOffset: r.start_offset,
-                endOffset: r.end_offset,
-                createdAt: r.created_at,
-                updatedAt: r.updated_at
-            }));
         }
     },
 
@@ -152,21 +121,6 @@ const resolvers = {
             const r = docRes.rows[0];
             return { id: r.id, title: r.title, content: r.content, lastModified: r.last_modified };
         },
-        addComment: async (_, { documentId, content, startOffset, endOffset }) => {
-            const res = await pool.query(
-                `INSERT INTO comments(document_id, content, start_offset, end_offset, created_at, updated_at)
-                 VALUES ($1, $2, $3, $4, now(), now())
-                 RETURNING id, document_id, content, start_offset, end_offset, created_at, updated_at`,
-                [documentId, content, startOffset, endOffset]
-            );
-
-            const r = res.rows[0];
-            return { id: r.id, documentId: r.document_id, content: r.content, startOffset: r.start_offset, endOffset: r.end_offset, createdAt: r.created_at, updatedAt: r.updated_at }; 
-        },
-        deleteComment: async (_, { id }) => {
-            const res = await pool.query("DELETE FROM comments WHERE id = $1", [id]);
-            return res.rowCount > 0;
-        }
     }
 };
 
