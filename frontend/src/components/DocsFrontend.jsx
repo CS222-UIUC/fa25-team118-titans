@@ -2,12 +2,10 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock, Code } from "lucide-react";
 import { GET_COMMENTS, ADD_COMMENT, DELETE_COMMENT } from "../graphql/commentQueries.js";
-<<<<<<< HEAD
 import './DocsFrontend.css';
 import VersionHistoryModal from "./VersionHistoryModal";
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-=======
 import "./DocsFrontend.css";
 import VersionHistoryModal from "./DocsVersionHistory.jsx";
 import { DOC_TEMPLATES } from "./docTemplates";
@@ -15,7 +13,6 @@ import FindReplacePanel from "./FindReplacePanel";
 import EditorStatsBar from "./EditorStatsBar";
 import DeleteDocumentButton from "./DeleteDocumentButton.jsx";
 import CommentSidebar from "./CommentSidebar.jsx";
->>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
 
 
 export default function DocsFrontend() {
