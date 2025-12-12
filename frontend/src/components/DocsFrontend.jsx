@@ -4,6 +4,8 @@ import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, File
 import { GET_COMMENTS, ADD_COMMENT, DELETE_COMMENT } from "../graphql/commentQueries.js";
 import "./DocsFrontend.css";
 import VersionHistoryModal from "./DocsVersionHistory.jsx";
+// Dynamically import Yjs and the websocket provider in the effect below
+// to avoid Jest attempting to parse non-transpiled ESM inside node_modules.
 import { DOC_TEMPLATES } from "./docTemplates";
 import FindReplacePanel from "./FindReplacePanel";
 import EditorStatsBar from "./EditorStatsBar";
@@ -132,11 +134,87 @@ export default function DocsFrontend() {
   }, [createDoc]);
 
 
-  const updateDocumentApollo = useCallback(async (id, title, content) => {
-    const res = await updateDoc({ variables: { id, title, content } });
-    const d = res.data.updateDocument;
-    return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
-  }, [updateDoc]);
+useEffect(() => {
+  if (!currentDocId || !editorRef.current) return;
+
+  let ydoc = null;
+  let provider = null;
+  let ytext = null;
+  let suppressLocal = false;
+
+  const setup = async () => {
+    try {
+      const Y = (await import('yjs')).default || (await import('yjs'));
+      const ws = await import('y-websocket');
+      const WebsocketProvider = ws.WebsocketProvider || ws.default?.WebsocketProvider || ws.default;
+
+      const docId = `doc-${currentDocId}`;
+      ydoc = new Y.Doc();
+      provider = new WebsocketProvider(process.env.REACT_APP_COLLAB_URL || 'ws://localhost:1234', docId, ydoc);
+      ytext = ydoc.getText('content');
+
+      const handleRemote = () => {
+        if (!editorRef.current) return;
+        const newHtml = ytext.toString();
+        if (document.activeElement === editorRef.current) {
+          return;
+        }
+        suppressLocal = true;
+        editorRef.current.innerHTML = newHtml;
+        requestAnimationFrame(() => { suppressLocal = false; });
+      };
+
+      ytext.observe(handleRemote);
+
+      const onInput = () => {
+        if (suppressLocal) return;
+        if (!editorRef.current) return;
+        const html = editorRef.current.innerHTML;
+        ydoc.transact(() => {
+          ytext.delete(0, ytext.length);
+          ytext.insert(0, html);
+        });
+      };
+
+      editorRef.current.addEventListener('input', onInput);
+
+      if (ytext.length > 0 && editorRef.current && !editorRef.current.contains(document.activeElement)) {
+        editorRef.current.innerHTML = ytext.toString();
+      }
+
+      // attach references for cleanup
+      return () => {
+        try {
+          ytext.unobserve(handleRemote);
+        } catch (e) {}
+        editorRef.current && editorRef.current.removeEventListener('input', onInput);
+        provider && provider.disconnect();
+        ydoc && ydoc.destroy();
+      };
+    } catch (err) {
+      // If imports fail (e.g., in test environment), silently skip collab setup
+      return () => {};
+    }
+  };
+
+  let cleanup = null;
+  (async () => { cleanup = await setup(); })();
+
+  return () => {
+    if (cleanup) cleanup();
+  };
+}, [currentDocId]);
+
+useEffect(() => {
+  if (!currentDocId) return;
+  refetch();
+}, [showHistory]);
+
+const updateDocumentApollo = useCallback(async (id, title, content) => {
+  const res = await updateDoc({ variables: { id, title, content } });
+  const d = res.data.updateDocument;
+  return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
+}, [updateDoc]);
 
 
   const handleSave = useCallback(async () => {

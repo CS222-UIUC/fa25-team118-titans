@@ -23,6 +23,16 @@ services:
     depends_on:
       - backend
 
+  collab:
+    build: ./collab-server
+    container_name: titans-collab
+    ports:
+      - "1234:1234"
+    environment:
+      - PORT=1234
+    depends_on:
+      - backend
+
   redis:
     image: redis:7-alpine
     container_name: titans-redis

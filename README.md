@@ -139,4 +139,39 @@ Notes:
 gh secret set DOCKER_USERNAME --body "${DOCKER_USERNAME}"
 gh secret set DOCKER_PASSWORD --body "${DOCKER_PASSWORD}"
 base64 -w0 $HOME/.kube/config | gh secret set KUBECONFIG --body -
+<<<<<<< HEAD
 ```
+ 
+## Collaborative editing (Yjs)
+
+This repository now includes a lightweight collaboration server using Yjs and `y-websocket`.
+
+What was added:
+- `collab-server/` — a small Yjs websocket server (listens on port `1234` by default).
+- `collab-server/Dockerfile` and `collab-server/package.json` so the server can be run via Docker.
+- `docker-compose.yml` was updated to add a `collab` service exposed on `ws://localhost:1234` for local development.
+- Frontend integration in `frontend/src/components/DocsFrontend.jsx` that connects to the collab server and syncs document HTML via a `Y.Text` named `content`.
+
+Quick start (development):
+
+1. Build and start services (this will build the collab server image and start it):
+
+```bash
+docker compose up --build
+```
+
+2. Install frontend deps and run frontend (if not running in Docker):
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+3. Open the app in two browser windows and open the same document — edits should sync in near real-time via the collab server.
+
+Notes and next steps:
+- The current client writes the full editor `innerHTML` into Y.Text on each input. This is a pragmatic starting point but not optimal for cursor preservation or efficient edits. 
+=======
+```
+>>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
