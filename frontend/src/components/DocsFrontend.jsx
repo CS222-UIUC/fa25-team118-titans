@@ -134,7 +134,6 @@ export default function DocsFrontend() {
   }, [createDoc]);
 
 
-<<<<<<< HEAD
 useEffect(() => {
   if (!currentDocId || !editorRef.current) return;
 
@@ -184,17 +183,16 @@ useEffect(() => {
   };
 }, [currentDocId]);
 
- useEffect(() => {
-    if (!currentDocId) return;
-    refetch();
- }, [showHistory]);
-=======
-  const updateDocumentApollo = useCallback(async (id, title, content) => {
-    const res = await updateDoc({ variables: { id, title, content } });
-    const d = res.data.updateDocument;
-    return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
-  }, [updateDoc]);
->>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
+useEffect(() => {
+  if (!currentDocId) return;
+  refetch();
+}, [showHistory]);
+
+const updateDocumentApollo = useCallback(async (id, title, content) => {
+  const res = await updateDoc({ variables: { id, title, content } });
+  const d = res.data.updateDocument;
+  return { id: d.id, title: d.title, content: d.content, lastModified: d.lastModified ? new Date(d.lastModified) : new Date() };
+}, [updateDoc]);
 
 
   const handleSave = useCallback(async () => {
