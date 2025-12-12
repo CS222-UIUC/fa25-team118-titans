@@ -20,6 +20,18 @@ async function init() {
       );
 
       CREATE INDEX IF NOT EXISTS idx_document_history_document_id ON document_history (document_id);
+
+      CREATE TABLE IF NOT EXISTS comments (
+        id SERIAL PRIMARY KEY,
+        document_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        start_offset INTEGER NOT NULL,
+        end_offset INTEGER NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_comments_document_id ON comments (document_id);
     `);
     console.log("Tables are ready!!");
   } catch (err) {

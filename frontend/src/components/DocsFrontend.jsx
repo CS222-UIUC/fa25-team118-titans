@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock, Code } from 'lucide-react';
+import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Save, FileText, Plus, Menu, Sun, Moon, Clock, Code } from "lucide-react";
+import { GET_COMMENTS, ADD_COMMENT, DELETE_COMMENT } from "../graphql/commentQueries.js";
 <<<<<<< HEAD
 import './DocsFrontend.css';
 import VersionHistoryModal from "./VersionHistoryModal";
@@ -9,10 +10,11 @@ import { WebsocketProvider } from 'y-websocket';
 =======
 import "./DocsFrontend.css";
 import VersionHistoryModal from "./DocsVersionHistory.jsx";
-import { DOC_TEMPLATES } from './docTemplates';
-import FindReplacePanel from './FindReplacePanel';
-import EditorStatsBar from './EditorStatsBar';
-import DeleteDocumentButton from './DeleteDocumentButton.jsx';
+import { DOC_TEMPLATES } from "./docTemplates";
+import FindReplacePanel from "./FindReplacePanel";
+import EditorStatsBar from "./EditorStatsBar";
+import DeleteDocumentButton from "./DeleteDocumentButton.jsx";
+import CommentSidebar from "./CommentSidebar.jsx";
 >>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
 
 
@@ -32,6 +34,9 @@ export default function DocsFrontend() {
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [showAddCommentButton, setShowAddCommentButton] = useState(false);
+  const [selectionRange, setSelectionRange] = useState(null);
   const editorRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const matchPositionsRef = useRef([]);
@@ -113,6 +118,12 @@ export default function DocsFrontend() {
   const { data, refetch } = useQuery(GET_DOCUMENTS, { fetchPolicy: 'network-only' });
   const [createDoc] = useMutation(CREATE_DOCUMENT);
   const [updateDoc] = useMutation(UPDATE_DOCUMENT);
+  const { data: commentData, refetch: refetchComments } = useQuery(GET_COMMENTS, {
+    variables: { documentId: currentDocId },
+    skip: !currentDocId,
+  });
+  const [addComment] = useMutation(ADD_COMMENT);
+  const [deleteComment] = useMutation(DELETE_COMMENT);
 
 
   const execCommand = useCallback((command, value = null) => {
@@ -297,10 +308,10 @@ useEffect(() => {
 
  // keep editor HTML in sync when doc changes
   useEffect(() => {
-    if (editorRef.current && currentDoc && !editorRef.current.contains(document.activeElement)) {
-      editorRef.current.innerHTML = currentDoc.content || '';
-    }
-  }, [currentDocId, currentDoc]);
+  if (editorRef.current && currentDoc && !editorRef.current.contains(document.activeElement)) {
+    editorRef.current.innerHTML = currentDoc.content || '';
+  }
+}, [currentDocId, currentDoc]);
 
   useEffect(() => {
     if (!showHistory) return;
@@ -545,6 +556,27 @@ useEffect(() => {
     debouncedSave();
   };
 
+  useEffect(() => {
+    if (commentData?.documentComments) {
+      setComments(commentData.documentComments);
+    }
+  }, [commentData]);
+
+  useEffect(() => {
+    const handleMouseUp = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) {
+        setShowAddCommentButton(false);
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      setSelectionRange(range);
+      setShowAddCommentButton(true);
+    };
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => document.removeEventListener("mouseup", handleMouseUp);
+  }, []);
+
  return (
    <div className={`docs-container ${darkMode ? 'dark-mode' : ''}`}>
      <div className="docs-header">
@@ -733,6 +765,33 @@ useEffect(() => {
       />
     )}
 
+    {showAddCommentButton && selectionRange && (
+      <button 
+        className="add-comment-floating"
+        onClick={async () => {
+          const commentText = prompt("Enter comment: ");
+          if (!commentText) return;
+
+          const startOffset = selectionRange.startOffset;
+          const endOffset = selectionRange.endOffset;
+
+          await addComment({
+            variables: {
+              documentId: currentDocId,
+              content: commentText,
+              startOffset,
+              endOffset
+            }
+          });
+
+          await refetchComments();
+          setShowAddCommentButton(false);
+        }}
+      >
+        Add Comment
+      </button>
+    )}
+
 
      {showDocList && (
        <div className="sidebar">
@@ -813,18 +872,32 @@ useEffect(() => {
       />
     )}
 
-     <div className="editor-container">
-       <div className="editor-paper">
-         <div
-           ref={editorRef}
-           contentEditable
-           onInput={handleInput}
-           className="editor-content"
-           style={{ fontSize: fontSize + 'px' }}
-           suppressContentEditableWarning
-         />
-       </div>
-     </div>
+    <div className="editor-and-comments">
+      <div className="editor-container">
+        <div className="editor-paper">
+          <div
+            ref={editorRef}
+            contentEditable
+            onInput={handleInput}
+            className="editor-content"
+            style={{ fontSize: fontSize + 'px' }}
+            suppressContentEditableWarning
+          />
+        </div>
+      </div>
+      <CommentSidebar
+        comments={comments}
+        onSelectComment={(c) => {
+          const el = editorRef.current.querySelector(`[data-comment-id="${c.id}"]`);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
+        onDelete={async (id) => {
+          await deleteComment({ variables: { id } });
+          await refetchComments();
+        }}
+        className="comment-sidebar"
+      />
+    </div>
     <EditorStatsBar
       wordCount={wordCount}
       charCount={charCount}
