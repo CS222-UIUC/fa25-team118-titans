@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "lucide-react": "^0.546.0"
+    "lucide-react": "^0.546.0",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.27"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
