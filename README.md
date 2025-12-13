@@ -1,6 +1,10 @@
-# CS 222 Project
+# CS 222 Project — Titans Editor
 
-React + Node.js document editor with real-time updates.
+A lightweight collaborative document editor (React frontend + Node.js GraphQL backend) with real-time sync using Yjs.
+
+Quick links: Frontend -> `frontend/`, Backend -> `backend/`, Collab server -> `collab-server/`.
+
+Small spruces: clarified README sections, added quick-start commands, and deployment notes.
 
 # Run Backend
 ```bash
@@ -139,17 +143,20 @@ Notes:
 gh secret set DOCKER_USERNAME --body "${DOCKER_USERNAME}"
 gh secret set DOCKER_PASSWORD --body "${DOCKER_PASSWORD}"
 base64 -w0 $HOME/.kube/config | gh secret set KUBECONFIG --body -
-<<<<<<< HEAD
 ```
  
 ## Collaborative editing (Yjs)
+
+This repository includes a lightweight collaboration server using Yjs and `y-websocket` for local development and experimentation.
 
 This repository now includes a lightweight collaboration server using Yjs and `y-websocket`.
 
 What was added:
 - `collab-server/` — a small Yjs websocket server (listens on port `1234` by default).
 - `collab-server/Dockerfile` and `collab-server/package.json` so the server can be run via Docker.
+- `docker-compose.yml` includes a `collab` service exposed at `ws://localhost:1234` for local development.
 - `docker-compose.yml` was updated to add a `collab` service exposed on `ws://localhost:1234` for local development.
+- Frontend integration in `frontend/src/components/DocsFrontend.jsx` connects to the collab server and syncs document HTML via a `Y.Text` named `content`.
 - Frontend integration in `frontend/src/components/DocsFrontend.jsx` that connects to the collab server and syncs document HTML via a `Y.Text` named `content`.
 
 Quick start (development):
@@ -170,8 +177,9 @@ npm start
 
 3. Open the app in two browser windows and open the same document — edits should sync in near real-time via the collab server.
 
+Notes:
+- The current client writes the full editor `innerHTML` into Y.Text on each input. This is a pragmatic starting point but not optimal for cursor preservation or efficient edits.
+- For production use, consider a proper editor binding (ProseMirror/TipTap/Quill) and secure the collab server (TLS + auth).
+
 Notes and next steps:
-- The current client writes the full editor `innerHTML` into Y.Text on each input. This is a pragmatic starting point but not optimal for cursor preservation or efficient edits. 
-=======
-```
->>>>>>> 56eccfb3c333815933ae6902c13e8712206eabb7
+- The current client writes the full editor `innerHTML` into Y.Text on each input. This is a pragmatic starting point but not optimal for cursor preservation or efficient edits.
