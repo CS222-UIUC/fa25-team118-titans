@@ -4,11 +4,19 @@ A lightweight collaborative document editor (React frontend + Node.js GraphQL ba
 
 Quick links: Frontend -> `frontend/`, Backend -> `backend/`, Collab server -> `collab-server/`.
 
+# Project Summary
+Motivation: Existing document systems often suffer from slow updates and rigid architectures. We aimed to build a developer-friendly, full-stack platform that solves these pain points using modern systems and real-time synchronization.
+
 # Developers:
 **Shrest Das** - Docker + Kubernetes orchestration, AWS EC2 deployment, Collaboration, CI/CD pipeline  
 **Maharsh Jani** - Frontend-Backend Integration, PostgreSQL, Frontend Features + Templates    
 **Sean Patel** - Backend, GraphQL Queries, Version History, Commenting, Document Management  
 **Nikhil Devarakonda** - Frontend, Version History  
+
+# Visual Representation
+<img width="745" height="433" alt="Screenshot 2025-12-15 at 11 46 52 PM" src="https://github.com/user-attachments/assets/e6c1001f-942b-426a-a10e-442f3747fc42" />
+
+# Running it Locally
 
 # Run Backend
 ```bash
@@ -80,8 +88,6 @@ mutation {
   }
 }
 ```
-Created AWS EC2 infrastructure skeleton. Docs coming soon!
-
 ## Deployment to EC2 (GitHub Actions)
 
 This project includes a GitHub Actions workflow that builds Docker images for the backend and frontend,
