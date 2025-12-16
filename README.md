@@ -7,7 +7,7 @@ Quick links: Frontend -> `frontend/`, Backend -> `backend/`, Collab server -> `c
 # Developers:
 **Shrest Das** - Docker + Kubernettes orchaestration, AWS EC2 deployment, Collaboration, CI/CD pipeline  
 **Maharsh Jani** - Frontend-Backend Integration, PostgreSQL, Frontend Features + Templates    
-**Sean Patel** - GraphQL Queries, Version History, Commenting, Document Management  
+**Sean Patel** - Backend, GraphQL Queries, Version History, Commenting, Document Management  
 **Nikhil Devarakonda** - Frontend, Version History  
 
 # Run Backend
