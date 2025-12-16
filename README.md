@@ -5,7 +5,7 @@ A lightweight collaborative document editor (React frontend + Node.js GraphQL ba
 Quick links: Frontend -> `frontend/`, Backend -> `backend/`, Collab server -> `collab-server/`.
 
 # Developers:
-**Shrest Das** - Docker + Kubernettes orchaestration, AWS EC2 deployment, Collaboration, CI/CD pipeline  
+**Shrest Das** - Docker + Kubernetes orchestration, AWS EC2 deployment, Collaboration, CI/CD pipeline  
 **Maharsh Jani** - Frontend-Backend Integration, PostgreSQL, Frontend Features + Templates    
 **Sean Patel** - Backend, GraphQL Queries, Version History, Commenting, Document Management  
 **Nikhil Devarakonda** - Frontend, Version History  
