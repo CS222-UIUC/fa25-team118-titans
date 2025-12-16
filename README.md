@@ -5,9 +5,9 @@ A lightweight collaborative document editor (React frontend + Node.js GraphQL ba
 Quick links: Frontend -> `frontend/`, Backend -> `backend/`, Collab server -> `collab-server/`.
 
 # Developers:
-Shrest Das
-Maharsh Jani
-Sean Patel
+Shrest Das, \n
+Maharsh Jani, \n
+Sean Patel, \n
 Nikhil Devarakonda
 
 # Run Backend
